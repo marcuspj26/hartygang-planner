@@ -723,5 +723,71 @@ init();
 })();
 </script>
 
+
+<!-- ENH: interior Date control + NOAA nautical chart reference -->
+<script>
+(function(){
+  function init(){
+    try{ addDate(); }catch(e){}
+    try{ addChart(); }catch(e){}
+  }
+  function addDate(){
+    if(document.getElementById('tripdate')) return;
+    var dep=document.getElementById('dep');
+    if(!dep) return;
+    var days=[].slice.call(document.querySelectorAll('.days .day'));
+    if(!days.length) return;
+    var lbl=document.createElement('label');
+    lbl.setAttribute('for','tripdate'); lbl.textContent='Date';
+    var sel=document.createElement('select'); sel.id='tripdate';
+    var selIdx=days.findIndex(function(d){return d.classList.contains('sel');});
+    days.forEach(function(d,i){
+      var t=(d.textContent||'').trim();
+      var m=t.match(/^(Today|Tomorrow|Mon|Tue|Wed|Thu|Fri|Sat|Sun)/);
+      var o=document.createElement('option');
+      o.value=d.getAttribute('data-day');
+      o.textContent=m?m[1]:('Day '+d.getAttribute('data-day'));
+      if(i===selIdx) o.selected=true;
+      sel.appendChild(o);
+    });
+    dep.parentNode.insertBefore(sel, dep.nextSibling);
+    dep.parentNode.insertBefore(lbl, sel);
+    sel.addEventListener('change', function(){
+      var target=document.querySelector('.days .day[data-day="'+sel.value+'"]');
+      if(target) target.click();
+    });
+    var mo=new MutationObserver(function(){
+      var cur=document.querySelector('.days .day.sel');
+      if(cur){ var v=cur.getAttribute('data-day'); if(sel.value!==v) sel.value=v; }
+    });
+    var dc=document.querySelector('.days'); if(dc) mo.observe(dc,{attributes:true,subtree:true,attributeFilter:['class']});
+  }
+  function addChart(){
+    if(document.getElementById('encchart')) return;
+    var mapwrap=document.querySelector('.mapwrap');
+    if(!mapwrap) return;
+    var base='https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/MapServer/export';
+    var bbox='-70.78,41.42,-70.20,41.66';
+    var url=base+'?bbox='+bbox+'&bboxSR=4326&imageSR=4326&size=1000,760&format=png&transparent=false&f=image';
+    var card=document.createElement('div'); card.id='encchart'; card.style.marginTop='22px';
+    var eb=document.createElement('div'); eb.textContent='NAUTICAL CHART \u00B7 REFERENCE ONLY';
+    eb.style.cssText='font:600 12px/1.4 system-ui,sans-serif;letter-spacing:.12em;color:#e8694a;margin-bottom:8px;';
+    var frame=document.createElement('div');
+    frame.style.cssText='border-radius:14px;overflow:hidden;border:1px solid rgba(18,34,47,.12);background:#eaf1f4;box-shadow:0 8px 24px rgba(15,34,51,.08);min-height:120px;';
+    var img=document.createElement('img');
+    img.src=url; img.alt='NOAA nautical chart \u2014 Nantucket Sound cruising ground';
+    img.loading='lazy'; img.style.cssText='width:100%;display:block;';
+    frame.appendChild(img);
+    var cap=document.createElement('div');
+    cap.innerHTML='NOAA ENC\u00AE paper-chart symbology, updated weekly. <strong>Not for navigation</strong> \u2014 for planning reference only. Source: NOAA Office of Coast Survey Chart Display Service.';
+    cap.style.cssText='font:400 12.5px/1.5 system-ui,sans-serif;color:#5f7180;margin-top:9px;';
+    card.appendChild(eb); card.appendChild(frame); card.appendChild(cap);
+    mapwrap.parentNode.insertBefore(card, mapwrap.nextSibling);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){setTimeout(init,300);});
+  else setTimeout(init,300);
+})();
+</script>
+
 </body>
 </html>
