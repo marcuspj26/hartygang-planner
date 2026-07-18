@@ -663,5 +663,61 @@ init();
 })();
 </script>
 
+
+<script>
+/* === QUERY-STATE HERO (choose destination + date first, then deliver) === */
+(function(){
+  if(window.__qsInit) return; window.__qsInit=1;
+  function build(){
+    var heroLeft=(document.querySelector("h1")||{}).parentElement;
+    var panel=document.querySelector(".hero-grid .panel");
+    var dest=document.getElementById("dest");
+    var days=[].slice.call(document.querySelectorAll(".days .day"));
+    if(!heroLeft||!panel||!dest||!days.length) return false;
+    panel.setAttribute("data-qs-hidden","1");
+    panel.style.transition="opacity .3s";
+    panel.style.opacity="0"; panel.style.pointerEvents="none"; panel.style.height="0"; panel.style.overflow="hidden"; panel.style.margin="0";
+    var cta=heroLeft.querySelector("a.cta"); if(cta) cta.style.display="none";
+    var qp=document.createElement("div"); qp.className="qs-panel";
+    var opts="<option value=\"\" disabled selected>Choose a destination…</option>";
+    [].slice.call(dest.options).forEach(function(o){ if(o.value&&o.value!=="custom") opts+="<option value=\""+o.value+"\">"+o.textContent+"</option>"; });
+    var dopts="<option value=\"\" disabled selected>Choose a date…</option>";
+    days.forEach(function(d){ var lbl=(d.innerText||d.textContent||"").split("\n")[0].trim(); dopts+="<option value=\""+d.dataset.day+"\">"+lbl+"</option>"; });
+    qp.innerHTML="<div class=\"qs-row\"><label class=\"qs-l\">Destination</label><select class=\"qs-sel\" id=\"qs-dest\">"+opts+"</select></div>"+
+      "<div class=\"qs-row\"><label class=\"qs-l\">Date</label><select class=\"qs-sel\" id=\"qs-date\">"+dopts+"</select></div>"+
+      "<button class=\"qs-go\" id=\"qs-go\" disabled>Show my trip call ⟶</button>"+
+      "<p class=\"qs-hint\">Pick a destination and a day — Hartygang delivers the trip call and the ride-home read.</p>";
+    heroLeft.appendChild(qp);
+    var qd=qp.querySelector("#qs-dest"), qt=qp.querySelector("#qs-date"), go=qp.querySelector("#qs-go");
+    function chk(){ go.disabled=!(qd.value&&qt.value); }
+    qd.addEventListener("change",chk); qt.addEventListener("change",chk);
+    go.addEventListener("click",function(){
+      dest.value=qd.value; dest.dispatchEvent(new Event("change",{bubbles:true}));
+      var card=document.querySelector(".days .day[data-day=\""+qt.value+"\"]"); if(card) card.click();
+      panel.removeAttribute("data-qs-hidden");
+      panel.style.height=""; panel.style.overflow=""; panel.style.margin=""; panel.style.pointerEvents="";
+      requestAnimationFrame(function(){ panel.style.opacity="1"; });
+      go.textContent="Update trip call ⟶";
+      if(window.innerWidth<900) panel.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+    return true;
+  }
+  var style=document.createElement("style");
+  style.textContent=
+    ".qs-panel{margin-top:26px;max-width:440px}"+
+    ".qs-row{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}"+
+    ".qs-l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#8aa0ad)}"+
+    ".qs-sel{appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:12px;color:#fff;font-family:inherit;font-size:17px;padding:13px 16px;cursor:pointer;background-image:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23c98a6a' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>\");background-repeat:no-repeat;background-position:right 15px center}"+
+    ".qs-sel option{color:#12222f}"+
+    ".qs-go{margin-top:6px;background:var(--coral,#c26a4a);color:#fff;border:none;border-radius:12px;font-family:inherit;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:13px;padding:15px 24px;cursor:pointer;transition:opacity .2s,background .2s}"+
+    ".qs-go:disabled{opacity:.4;cursor:not-allowed}"+
+    ".qs-go:not(:disabled):hover{background:#d1795a}"+
+    ".qs-hint{font-size:13px;color:var(--muted,#8aa0ad);margin:14px 0 0;line-height:1.5}";
+  document.head.appendChild(style);
+  function boot(){ if(!build()) setTimeout(boot,300); }
+  if(document.readyState!=="loading") setTimeout(boot,500); else document.addEventListener("DOMContentLoaded",function(){setTimeout(boot,500);});
+})();
+</script>
+
 </body>
 </html>
