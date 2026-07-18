@@ -1,0 +1,10 @@
+# netlify.toml
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Nice short path: /api/tides -> the function
+[[redirects]]
+  from = "/api/tides"
+  to = "/.netlify/functions/tides"
+  status = 200
