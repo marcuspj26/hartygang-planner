@@ -589,5 +589,79 @@ function init(){
 init();
 
 </script>
+
+<script>
+/* === 3-TIER VERDICT ENHANCEMENT (Green / Yellow / Red) === */
+(function(){
+  function num(s){ if(s==null) return NaN; var m=String(s).replace(/,/g,"").match(/-?[0-9]+(?:[.][0-9]+)?/); return m?parseFloat(m[0]):NaN; }
+  function readMetrics(){
+    var out={wind:NaN,gust:NaN,wave:NaN,period:NaN};
+    document.querySelectorAll(".metrics .metric").forEach(function(el){
+      var k=((el.querySelector(".k")||{}).textContent||"").trim().toUpperCase();
+      var v=(el.querySelector(".v")||{}).textContent||"";
+      if(k.indexOf("WIND")===0) out.wind=num(v);
+      else if(k.indexOf("GUST")===0) out.gust=num(v);
+      else if(k.indexOf("WAVE")===0) out.wave=num(v);
+      else if(k.indexOf("PERIOD")===0) out.period=num(v);
+    });
+    return out;
+  }
+  function windBand(kt){ if(!(kt>=0)) return 0; if(kt<10) return 0; if(kt<20) return 1; return 2; }
+  function waveBand(ft){ if(!(ft>=0)) return 0; if(ft<2) return 0; if(ft<4) return 1; return 2; }
+  var BANDS=[
+    {key:"go",name:"ALL SYSTEMS GO",icon:"✓",tag:"Green",rec:"Conditions are calm and well within this center console’s comfort zone — good to run."},
+    {key:"caution",name:"A BIT SPICY, BUT DOABLE",icon:"⚠",tag:"Yellow",rec:"Manageable but sporty — expect chop and spray. Trim down, slow in the sets, and brief the crew before you go."},
+    {key:"hold",name:"NO WAY, JOSÉ",icon:"✕",tag:"Red",rec:"Genuinely dangerous for a 23-ft center console. Stay on the mooring — this one is a hard no."}
+  ];
+  function compute(m){
+    var wB=windBand(m.wind), waB=waveBand(m.wave);
+    var band=Math.max(wB,waB);
+    var gB=windBand(m.gust); if(gB>band) band=gB;
+    if(m.period>0 && m.period<5 && band<2) band=Math.min(band+1,2);
+    var driver=(waB>=wB)?"seas":"wind"; if(gB>Math.max(wB,waB)) driver="gusts";
+    return {band:band,driver:driver};
+  }
+  function fmt(n){ return (isFinite(n)?(Math.round(n*10)/10):"–"); }
+  function apply(){
+    var vEl=document.querySelector(".verdict"); if(!vEl) return;
+    var m=readMetrics(); if(!(isFinite(m.wind)||isFinite(m.wave))) return;
+    var r=compute(m), B=BANDS[r.band];
+    vEl.className="verdict "+B.key;
+    var dot=vEl.querySelector(".dot"); if(dot) dot.textContent=B.icon;
+    var txt=vEl.querySelector("div:not(.dot)");
+    if(txt){ txt.innerHTML="<div class=\"label\">"+B.tag+" — skipper call</div><h2>"+B.name+"</h2>"; }
+    var host=vEl.parentNode;
+    var prev=host.querySelector(".verdict-detail"); if(prev) prev.remove();
+    var d=document.createElement("div"); d.className="verdict-detail";
+    d.innerHTML="<p class=\"vd-rec\">"+B.rec+"</p>"+
+      "<div class=\"vd-nums\">"+
+        "<span class=\"vd-n\"><b>"+fmt(m.wind)+"</b><i>kt wind</i></span>"+
+        "<span class=\"vd-n\"><b>"+fmt(m.gust)+"</b><i>kt gust</i></span>"+
+        "<span class=\"vd-n\"><b>"+fmt(m.wave)+"</b><i>ft waves</i></span>"+
+        "<span class=\"vd-n\"><b>"+fmt(m.period)+"</b><i>s period</i></span>"+
+      "</div>"+
+      "<p class=\"vd-drv\">Set by <b>"+r.driver+"</b> · worst-factor-wins</p>";
+    vEl.insertAdjacentElement("afterend",d);
+  }
+  var style=document.createElement("style");
+  style.textContent=
+    ".verdict-detail{margin:2px 0 10px;max-width:640px}"+
+    ".verdict-detail .vd-rec{font-size:15px;line-height:1.55;color:var(--ink,#12222f);margin:6px 0 14px;font-weight:500}"+
+    ".verdict-detail .vd-nums{display:flex;flex-wrap:wrap;gap:10px}"+
+    ".verdict-detail .vd-n{flex:1 1 92px;min-width:92px;background:rgba(18,34,47,.04);border:1px solid rgba(18,34,47,.10);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:3px}"+
+    ".verdict-detail .vd-n b{font-size:22px;font-weight:700;line-height:1;color:var(--ink,#12222f)}"+
+    ".verdict-detail .vd-n i{font-size:10px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted,#5f7180);font-style:normal}"+
+    ".verdict.go .vd-n b{color:var(--good,#2f8f6b)} .verdict.caution .vd-n b{color:var(--warn,#d99a2b)} .verdict.hold .vd-n b{color:var(--bad,#d0563b)}"+
+    ".verdict-detail .vd-drv{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#5f7180);margin:12px 0 0}";
+  document.head.appendChild(style);
+  function boot(){
+    apply();
+    var mo=new MutationObserver(function(){ if(window.__hgVD) return; window.__hgVD=1; setTimeout(function(){window.__hgVD=0; apply();},60); });
+    var t=document.querySelector(".metrics"); if(t&&t.parentNode) mo.observe(t.parentNode,{childList:true,subtree:true,characterData:true});
+  }
+  if(document.readyState!=="loading") setTimeout(boot,400); else document.addEventListener("DOMContentLoaded",function(){setTimeout(boot,400);});
+})();
+</script>
+
 </body>
 </html>
