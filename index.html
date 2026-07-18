@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hartygang Weather & Sea Planner</title>
+<style>
+:root{
+  --navy:#0f2233; --navy2:#16324a; --paper:#f4f1ea; --paper2:#e9e4d8;
+  --coral:#e8694a; --ink:#12222f; --muted:#5f7180; --line:rgba(15,34,51,.14);
+  --good:#2f8f6b; --warn:#d99a2b; --bad:#d0563b;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:"Helvetica Neue",Arial,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.55}
+h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.05;margin:0}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--coral);font-weight:700;display:flex;align-items:center;gap:12px}
+.eyebrow::before{content:"";width:28px;height:2px;background:var(--coral)}
+.muted{color:var(--muted)}
+button{font-family:var(--sans);cursor:pointer}
+header{position:sticky;top:0;z-index:50;background:var(--navy);color:#eef2f5}
+.bar{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;flex-direction:column;text-decoration:none;color:#fff}
+.brand b{font-size:15px;letter-spacing:.22em}
+.brand span{font-size:11px;letter-spacing:.12em;color:#9fb2c0}
+nav.primary{display:flex;gap:22px;align-items:center}
+nav.primary a{font-size:13px;letter-spacing:.04em;text-decoration:none;color:#cdd8e0;padding:6px 0;border-bottom:2px solid transparent}
+nav.primary a:hover{color:#fff;border-color:var(--coral)}
+.mode{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9fb2c0;border:1px solid rgba(255,255,255,.2);padding:5px 10px;border-radius:999px}
+.menu-toggle{display:none;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:8px 10px}
+.hero{background:var(--navy);color:#eef2f5;padding:60px 0 80px}
+.hero-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:start}
+.hero h1{font-size:clamp(40px,6vw,72px);color:#fff}
+.hero p.lede{font-size:18px;color:#c3d0da;max-width:34ch;margin:18px 0 26px}
+.cta{display:inline-flex;align-items:center;gap:14px;background:var(--coral);color:#fff;border:none;padding:16px 24px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;text-decoration:none}
+.cta:hover{filter:brightness(1.06)}
+.panel{background:var(--paper);color:var(--ink);border-radius:4px;padding:28px}
+.panel .row{display:flex;align-items:center;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.linkbtn{background:none;border:none;color:var(--coral);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px}
+.verdict{display:flex;align-items:center;gap:18px;margin:22px 0 8px}
+.verdict .dot{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;flex:0 0 auto;border:2px solid}
+.verdict.go .dot{border-color:var(--good);color:var(--good)}
+.verdict.caution .dot{border-color:var(--warn);color:var(--warn)}
+.verdict.hold .dot{border-color:var(--bad);color:var(--bad)}
+.verdict .label{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.verdict h2{font-size:34px}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:18px 28px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.mini .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.mini .v{font-family:var(--serif);font-size:17px}
+.live{background:var(--navy2);color:#dfe8ee;padding:26px 0}
+.live-head{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9fb2c0;margin-bottom:14px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:rgba(255,255,255,.08)}
+.metric{background:var(--navy2);padding:20px}
+.metric .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9fb2c0}
+.metric .v{font-family:var(--serif);font-size:40px;line-height:1.1;margin-top:6px}
+.metric .v small{font-size:14px;color:#9fb2c0;font-family:var(--sans);margin-left:4px}
+.status{font-size:12px;color:#9fb2c0;margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:4px;font-weight:700}
+.badge.live{background:rgba(47,143,107,.25);color:#7fe0b6}
+.badge.fallback{background:rgba(217,154,43,.22);color:#f0c675}
+.badge.est{background:rgba(159,178,192,.2);color:#c3d0da}
+.tide{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}
+.tide .lab{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9fb2c0}
+.tide .ev{font-family:var(--serif);font-size:16px;color:#eef2f5}
+.tide .ev small{color:#9fb2c0;font-family:var(--sans);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-right:6px}
+section{padding:72px 0}
+.sec-head{max-width:56ch;margin-bottom:34px}
+.sec-head h2{font-size:clamp(30px,4vw,44px);margin-top:10px}
+.sec-head p{color:var(--muted);margin-top:14px;font-size:16px}
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.day{border:1px solid var(--line);border-radius:6px;padding:18px;background:#fff;cursor:pointer;transition:.15s}
+.day:hover{border-color:var(--coral)}
+.day.sel{border-color:var(--coral);box-shadow:0 0 0 2px rgba(232,105,74,.25)}
+.day .d{font-family:var(--serif);font-size:20px}
+.day .sky{font-size:12px;color:var(--muted);margin:2px 0 14px}
+.day .stat{display:flex;justify-content:space-between;font-size:13px;margin:4px 0}
+.day .stat b{font-family:var(--serif);font-weight:600}
+.window{margin-top:14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:6px 8px;border-radius:4px;text-align:center}
+.window.go{background:rgba(47,143,107,.14);color:var(--good)}
+.window.caution{background:rgba(217,154,43,.16);color:#a9781c}
+.window.hold{background:rgba(208,86,59,.14);color:var(--bad)}
+.build{margin-top:34px;border:1px solid var(--line);border-radius:8px;padding:24px;background:#fff}
+.build h3{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--sans);font-weight:700}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end;height:180px;margin-top:20px}
+.bcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px}
+.bcol .bar{width:60%;background:linear-gradient(var(--coral),#f0a58f);border-radius:3px 3px 0 0;min-height:4px}
+.bcol .wh{font-family:var(--serif);font-size:14px}
+.bcol .t{font-size:10px;color:var(--muted);letter-spacing:.04em}
+.bcol .p{font-size:10px;color:var(--muted)}
+.adv-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:40px;align-items:start}
+#advisor{background:#edf0e8}
+.chips{display:flex;flex-direction:column;gap:0;margin-top:24px}
+.chip{text-align:left;background:none;border:none;border-top:1px solid var(--line);padding:16px 0;font-size:16px;font-family:var(--serif);display:flex;justify-content:space-between;align-items:center;color:var(--ink)}
+.chip:hover{color:var(--coral)}
+.advbox{background:#fff;border-radius:10px;padding:30px;box-shadow:0 20px 50px -30px rgba(15,34,51,.5)}
+.advbox .top{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.advbox .who{display:flex;align-items:center;gap:12px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.advbox .who .av{width:40px;height:40px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:18px}
+.askform{margin-top:20px}
+.askform label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:10px}
+.askrow{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.askrow input{flex:1;border:none;padding:16px;font-size:15px;font-family:var(--serif);outline:none;background:#fff}
+.askrow button{border:none;background:var(--coral);color:#fff;padding:0 26px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px}
+.hint{font-size:12px;color:var(--muted);margin-top:10px}
+.answer{margin-top:22px}
+.answer h4{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--coral);font-family:var(--sans);margin:20px 0 6px}
+.answer p{margin:0 0 4px;font-size:16px;font-family:var(--serif);line-height:1.5}
+.tags{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+.tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--paper2);color:var(--muted);padding:5px 10px;border-radius:999px}
+.score{margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}
+.score .barrow{display:grid;grid-template-columns:130px 1fr 44px;align-items:center;gap:12px;margin:9px 0;font-size:13px}
+.score .track{height:8px;background:var(--paper2);border-radius:999px;overflow:hidden}
+.score .fill{height:100%;border-radius:999px}
+.plan-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:36px;align-items:start}
+.controls label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:18px 0 8px}
+.controls select,.controls input{width:100%;padding:12px;border:none;border-bottom:2px solid var(--navy);background:transparent;font-family:var(--serif);font-size:20px;outline:none}
+.reco{margin-top:26px;border:1px solid var(--line);border-radius:8px;padding:18px;background:#fff}
+.reco .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.reco .v{font-family:var(--serif);font-size:18px;margin-top:4px;display:flex;align-items:center;gap:10px}
+.reco .pin{width:12px;height:12px;border-radius:50%}
+.mapwrap{background:var(--navy);border-radius:10px;overflow:hidden}
+svg.map{width:100%;height:auto;display:block}
+.brief{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px;margin-top:18px}
+.brief .bh{display:flex;justify-content:space-between;align-items:baseline}
+.brief h3{font-size:30px}
+.brief .nm{font-family:var(--serif);font-size:30px}
+.brief .nm small{font-size:12px;color:var(--muted);display:block;text-align:right}
+.brief .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:20px 0;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.brief .stats .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.brief .stats .v{font-family:var(--serif);font-size:20px;margin-top:4px}
+.legs{list-style:none;padding:0;margin:0}
+.legs li{display:flex;gap:14px;padding:10px 0;align-items:flex-start}
+.legs .n{width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 auto}
+.legs b{font-family:var(--serif);font-size:16px}
+.legs span{font-size:13px;color:var(--muted)}
+.disc{font-size:12px;color:var(--muted);margin-top:14px}
+#sources{background:var(--navy);color:#dfe8ee}
+#sources .eyebrow{color:#f0a58f}
+#sources h2{color:#fff}
+.srcs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.src{display:block;text-decoration:none;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:22px;color:#dfe8ee}
+.src:hover{border-color:var(--coral)}
+.src .k{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#9fb2c0}
+.src .t{font-family:var(--serif);font-size:18px;margin-top:8px}
+footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid rgba(255,255,255,.1)}
+.foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.foot b{color:#fff;font-family:var(--serif);letter-spacing:.1em;font-size:16px}
+@media(max-width:900px){
+  nav.primary,.mode{display:none}
+  .menu-toggle{display:block}
+  .hero-grid,.adv-grid,.plan-grid{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .days{grid-template-columns:1fr 1fr}
+  .srcs{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body id="top">
+<div id="APP">
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="#top"><b>HARTYGANG</b><span>Weather &amp; Sea Planner</span></a>
+    <nav class="primary" aria-label="Primary">
+      <a href="#outlook">Outlook</a>
+      <a href="#hartygang">The boat</a>
+      <a href="#route">Route plan</a>
+      <a href="#advisor">Ask the advisor</a>
+      <a href="https://mashpeemarket.com/menu" target="_blank" rel="noopener">Lunch order &#8599;</a>
+      <a href="#sources">Sources</a>
+    </nav>
+    <span class="mode">Planning mode</span>
+    <button class="menu-toggle" aria-label="Toggle menu">Menu</button>
+  </div>
+</header>
+<div class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">New Seabury &middot; Mashpee, Massachusetts</div>
+      <h1>Where should Hartygang go?</h1>
+      <p class="lede">Start with a destination. Hartygang turns the live forecast into a route-specific trip call and a practical read on the ride home.</p>
+      <a class="cta" href="#route">Choose destination &#10230;</a>
+    </div>
+    <div class="panel" id="tripcall">
+      <div class="row"><span>Trip call</span><button class="linkbtn" data-jump="route">Change destination</button></div>
+      <div id="tc-body"><p class="muted" style="margin-top:20px">Loading forecast&hellip;</p></div>
+    </div>
+  </div>
+</div>
+<div class="live" id="livestrip">
+  <div class="wrap">
+    <div class="live-head"><span>Nantucket Sound &middot; ANZ232 &middot; Home dock 41.5867&deg; N, 70.4647&deg; W</span><span id="live-updated">Updated &mdash;</span></div>
+    <div class="metrics" id="metrics"></div>
+    <div class="status" id="live-status"></div>
+    <div class="tide" id="tide" aria-live="polite">
+      <span class="lab">Popponesset tide</span>
+      <span id="tide-badge" class="badge est">Estimated</span>
+      <span id="tide-events" class="ev muted">Calculating&hellip;</span>
+    </div>
+  </div>
+</div>
+<section id="outlook">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Choose your day</div>
+      <h2>The Sound, at a glance.</h2>
+      <p>Scores combine wave height and period, wind, gusts, rain risk, route exposure, and your crew profile. Pick a day to load its trip call and hourly build.</p>
+    </div>
+    <div class="days" id="days" role="list"></div>
+    <div class="build">
+      <h3>Departure-day build &middot; <span id="build-day">Today</span></h3>
+      <div class="bars" id="bars"></div>
+    </div>
+  </div>
+</section>
+<section id="advisor">
+  <div class="wrap adv-grid">
+    <div>
+      <div class="eyebrow">Ask the Hartygang advisor</div>
+      <h2>Ask first.<br>Then plan the run.</h2>
+      <p class="muted" style="margin-top:16px">Ask a complete question in plain English. The advisor reads your question, the selected day and destination, the hourly build, tide timing, and crew comfort &mdash; and answers the question you actually asked.</p>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="advbox">
+      <div class="top">
+        <div class="who"><span class="av">H</span> Hartygang advisor</div>
+        <span class="badge" id="adv-badge">&mdash;</span>
+      </div>
+      <form class="askform" id="askform">
+        <label for="ask">Where do you want to go &mdash; and what do you want to know?</label>
+        <div class="askrow">
+          <input id="ask" autocomplete="off" placeholder="Can we take the kids to Sampson's Island after lunch and still have a comfortable ride home?">
+          <button type="submit">Ask &#10230;</button>
+        </div>
+        <p class="hint">Answers are computed from the live forecast, tide timing, and your inputs &mdash; no guessing, no fake &ldquo;connecting.&rdquo;</p>
+      </form>
+      <div class="answer" id="answer" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+<section id="hartygang">
+  <div class="wrap sec-head">
+    <div class="eyebrow">Know the boat</div>
+    <h2>Advice shaped for this center console.</h2>
+    <p>Hartygang's day starts at the home dock inside Popponesset Bay &mdash; not at a generic Cape Cod waypoint. Every route begins at the home port, clears the local entrance, and weighs the exposed return leg back across Nantucket Sound.</p>
+  </div>
+</section>
+<section id="route">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Shape the outing</div>
+      <h2>Plan the run, not just the weather.</h2>
+    </div>
+    <div class="plan-grid">
+      <div class="controls">
+        <label for="dest">Destination</label>
+        <select id="dest"></select>
+        <label for="dep">Departure</label>
+        <input id="dep" type="time" value="08:00">
+        <label for="crew">Crew profile</label>
+        <select id="crew">
+          <option value="family">Comfort first</option>
+          <option value="regular" selected>Regular crew</option>
+          <option value="sport">Experienced / sport</option>
+        </select>
+        <div class="reco" aria-live="polite">
+          <div class="k">Updated recommendation</div>
+          <div class="v" id="reco-v"><span class="pin"></span><span>&mdash;</span></div>
+        </div>
+        <div class="score" id="score"></div>
+      </div>
+      <div>
+        <div class="mapwrap" id="mapwrap"></div>
+        <div class="brief" id="brief"></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="sources">
+  <div class="wrap">
+    <div class="eyebrow">Sources &amp; seamanship</div>
+    <h2>Forecasts inform. The skipper decides.</h2>
+    <div class="srcs">
+      <a class="src" href="https://marine.weather.gov/MapClick.php?TextType=2&zoneid=ANZ232" target="_blank" rel="noopener"><div class="k">NOAA / NWS</div><div class="t">Nantucket Sound marine zone ANZ232</div></a>
+      <a class="src" href="https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=8447742" target="_blank" rel="noopener"><div class="k">NOAA Tides</div><div class="t">Popponesset Island station 8447742</div></a>
+      <a class="src" href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank" rel="noopener"><div class="k">Marine models</div><div class="t">Open-Meteo wave &amp; weather guidance (live)</div></a>
+    </div>
+    <p class="disc" style="margin-top:24px">This planner is decision support, not an official forecast or a substitute for navigation, judgment, or local knowledge.</p>
+  </div>
+</section>
+<footer>
+  <div class="wrap foot">
+    <div><b>HARTYGANG</b> &nbsp; <span>New Seabury &middot; Mashpee</span></div>
+    <div>Built for the next good day on Nantucket Sound.</div>
+    <a href="#top" style="color:#cdd8e0;text-decoration:none">Back to top &#8593;</a>
+  </div>
+</footer>
+</div>
+<script>
+
+const HOME = { lat:41.5867, lon:-70.4647, name:"New Seabury" };
+const TIDE_STATION = "8447742"; // Popponesset Island (subordinate; ref 8443970 Boston)
+const DEST = {
+  local:        {name:"Popponesset Bay Loop", nm:6,  exposure:0, course:"Bay", crossing:false,
+                 legs:[["Home dock","Popponesset departure"],["Popponesset Bay","Protected shallows"],["Home","Return before sea-breeze"]],
+                 note:"A protected in-bay loop. Little open-water exposure; wind chop over the shoals is the main factor."},
+  "sampsons-island":{name:"Sampson's Island", nm:13, exposure:1, course:"W / NW", crossing:false,
+                 legs:[["Home dock","Popponesset Bay departure"],["Succonnesset Point","Assess beam chop"],["Sampson's Island","Shoals, beach traffic & anchoring"]],
+                 note:"A close-to-home run toward Cotuit with frequent turn-back options. The exposed piece is the short Sound leg west of Popponesset."},
+  cotuit:       {name:"Cotuit Harbor", nm:15, exposure:1, course:"W", crossing:false,
+                 legs:[["Home dock","Popponesset departure"],["Sound leg","Short SW exposure"],["Cotuit Harbor","Mooring field & channel"]],
+                 note:"Short westward hop. Watch the entrance shoals and mind the channel on the way in."},
+  waquoit:      {name:"Waquoit Bay & Washburn Island", nm:16, exposure:1, course:"W / SW", crossing:false,
+                 legs:[["Home dock","Popponesset departure"],["Sound leg","Beam sea westbound"],["Waquoit","Bar & inner bay"]],
+                 note:"A westward run with a shallow entrance bar. Time the bar with tide."},
+  falmouth:     {name:"Falmouth Harbor", nm:24, exposure:2, course:"W / SW", crossing:true,
+                 legs:[["Home dock","Popponesset departure"],["Sound crossing","SW build on the nose home"],["Falmouth Harbor","Ferry & channel traffic"]],
+                 note:"Longer westbound Sound run. A building SW makes the return leg the hard part of the day."},
+  naushon:      {name:"Naushon Island & Hadley Harbor", nm:34, exposure:3, course:"W / SW", crossing:true,
+                 legs:[["Home dock","Popponesset departure"],["Sound crossing","Exposed SW fetch"],["Woods Hole area","Strong current"],["Hadley Harbor","Protected anchorage"]],
+                 note:"Long, exposed run past Woods Hole with serious current. Plan the crossing around wind and current together."},
+  "oak-bluffs": {name:"Oak Bluffs", nm:26, exposure:3, course:"S / SW", crossing:true,
+                 legs:[["Home dock","Popponesset departure"],["Sound crossing","Monitor southwest build"],["East Chop","Traffic & ferry awareness"]],
+                 note:"Open-water exposure across Nantucket Sound. A short-period SW wind sea can make the ride home the toughest leg."},
+  "vineyard-haven":{name:"Vineyard Haven", nm:27, exposure:3, course:"S / SW", crossing:true,
+                 legs:[["Home dock","Popponesset departure"],["Sound crossing","SW fetch across the Sound"],["Vineyard Haven","Busy harbor, ferry lanes"]],
+                 note:"Full Sound crossing into a busy ferry harbor. The exposed return leg governs the day."},
+  edgartown:    {name:"Edgartown Harbor", nm:30, exposure:3, course:"S / SE", crossing:true,
+                 legs:[["Home dock","Popponesset departure"],["Sound crossing","Long SW fetch"],["Cape Poge","Watch the rips"],["Edgartown","Strong harbor current"]],
+                 note:"Longest island run with rips near Cape Poge and strong harbor current. Weather and current both matter."},
+  hyannis:      {name:"Hyannis Harbor", nm:18, exposure:2, course:"E", crossing:true,
+                 legs:[["Home dock","Popponesset departure"],["Sound leg","Eastbound, quartering sea"],["Hyannis","Ferry & channel traffic"]],
+                 note:"Eastbound Sound run into heavy ferry traffic. Quartering seas can be uncomfortable in a fresh SW."},
+  nantucket:    {name:"Nantucket Harbor", nm:44, exposure:3, course:"SE", crossing:true,
+                 legs:[["Home dock","Popponesset departure"],["Sound crossing","Long exposed SE run"],["Shoals","Time the shoals & tide"],["Nantucket","Harbor entrance"]],
+                 note:"The longest, most exposed run &mdash; a real open-water passage. Only a genuinely settled day makes this comfortable."},
+  custom:       {name:"Other destination", nm:20, exposure:2, course:"varies", crossing:true,
+                 legs:[["Home dock","Popponesset departure"],["Open water","Assess your own route"],["Destination","Confirm on the chart"]],
+                 note:"Custom destination. Exposure assumed moderate &mdash; verify your own route, distance, and shelter."}
+};
+const ORDER = ["local","sampsons-island","cotuit","waquoit","falmouth","naushon","oak-bluffs","vineyard-haven","edgartown","hyannis","nantucket","custom"];
+const S = { data:null, live:false, dayIdx:0, dest:"oak-bluffs", crew:"regular", dep:"08:00", updated:null, tide:null, tideLive:false };
+const CREW = { family:{label:"Comfort first", tol:0.75}, regular:{label:"Regular crew", tol:1.0}, sport:{label:"Experienced / sport", tol:1.35} };
+
+function fallback(){
+  const days=["Today","Tomorrow","Mon","Tue","Wed"];
+  const seed=[{wh:3.4,wp:5,g:27,w:18,pp:20},{wh:1.8,wp:6,g:16,w:11,pp:10},{wh:1.4,wp:6,g:14,w:9,pp:5},{wh:2.8,wp:5,g:24,w:16,pp:30},{wh:4.2,wp:4,g:31,w:22,pp:40}];
+  return seed.map((s,i)=>{
+    const hours=[];
+    for(let h=5;h<=19;h++){ const t=(h-5)/14;
+      hours.push({hour:h,wh:+(s.wh*(0.55+0.7*t)).toFixed(1),wp:Math.max(3,Math.round(s.wp-2*t)),wd:210,w:+(s.w*(0.6+0.7*t)).toFixed(0),g:+(s.g*(0.6+0.7*t)).toFixed(0),wdir:215,pp:s.pp}); }
+    return {label:days[i],sky:"Partly cloudy",whMax:s.wh,gMax:s.g,hours,sunrise:5*60+23,sunset:20*60+12};
+  });
+}
+async function load(){
+  try{
+    const m="https://marine-api.open-meteo.com/v1/marine?latitude="+HOME.lat+"&longitude="+HOME.lon+"&hourly=wave_height,wave_period,wave_direction&timezone=America/New_York&forecast_days=5&length_unit=imperial";
+    const f="https://api.open-meteo.com/v1/forecast?latitude="+HOME.lat+"&longitude="+HOME.lon+"&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation_probability,cloud_cover&daily=sunrise,sunset&timezone=America/New_York&forecast_days=5&wind_speed_unit=kn";
+    const [mr,fr]=await Promise.all([fetch(m),fetch(f)]);
+    if(!mr.ok||!fr.ok) throw 0;
+    S.data=merge(await mr.json(), await fr.json()); S.live=true;
+  }catch(e){ S.data=fallback(); S.live=false; }
+  S.updated=new Date();
+  // 1) instant estimated tide, then 2) sequenced live NOAA upgrade
+  S.tide=estimateTides(new Date()); S.tideLive=false;
+  render();
+  loadTides();
+}
+function toMin(iso){ const t=iso.split("T")[1]; return (+t.split(":")[0])*60+(+t.split(":")[1]); }
+function merge(mj,fj){
+  const days=[], lbl=["Today","Tomorrow"];
+  for(let d=0;d<5;d++){
+    const date=fj.daily.time[d];
+    const label=d<2?lbl[d]:new Date(date+"T12:00").toLocaleDateString("en-US",{weekday:"short"});
+    const hours=[];
+    for(let i=0;i<mj.hourly.time.length;i++){
+      if(!mj.hourly.time[i].startsWith(date)) continue;
+      const h=+mj.hourly.time[i].split("T")[1].split(":")[0];
+      if(h<5||h>19) continue;
+      hours.push({hour:h,wh:mj.hourly.wave_height[i],wp:mj.hourly.wave_period[i],wd:mj.hourly.wave_direction[i],w:fj.hourly.wind_speed_10m[i],g:fj.hourly.wind_gusts_10m[i],wdir:fj.hourly.wind_direction_10m[i],pp:fj.hourly.precipitation_probability[i]});
+    }
+    days.push({label,sky:skyLabel(fj,date),whMax:Math.max(...hours.map(h=>h.wh)),gMax:Math.max(...hours.map(h=>h.g)),hours,sunrise:toMin(fj.daily.sunrise[d]),sunset:toMin(fj.daily.sunset[d])});
+  }
+  return days;
+}
+function skyLabel(fj,date){ let s=0,n=0; for(let i=0;i<fj.hourly.time.length;i++){ if(fj.hourly.time[i].startsWith(date)){s+=fj.hourly.cloud_cover[i];n++;} } const c=n?s/n:50; return c<25?"Mostly sunny":c<60?"Partly cloudy":c<85?"Mostly cloudy":"Overcast"; }
+function dirName(deg){ const d=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]; return d[Math.round(deg/22.5)%16]; }
+function fmtTime(min){ let h=Math.floor(min/60),m=Math.round(min%60); const ap=h>=12?"PM":"AM"; h=h%12||12; return h+":"+String(m).padStart(2,"0")+" "+ap; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function travelMin(nm){ return Math.round((nm/2)/22*60); }
+function toMinStr(s){ return (+s.split(":")[0])*60+(+s.split(":")[1]); }
+function hourAt(day,min){ const h=Math.round(min/60); return day.hours.find(x=>x.hour===h)||day.hours.reduce((a,b)=>Math.abs(b.hour-min/60)<Math.abs(a.hour-min/60)?b:a); }
+
+// ---------- TIDE MODULE (sequenced: estimate now, live NOAA upgrade) ----------
+// Estimate: semidiurnal M2 model anchored to a known Popponesset high water, ~12h25m period.
+// This is an approximation for instant display; replaced by NOAA data when it arrives.
+const TIDE_PERIOD_MIN = 745; // ~12h25m (two highs/day)
+const M2_EPOCH = Date.UTC(2025,0,1,4,30); // reference high water (UTC) near the station; approximate
+function estimateTides(now){
+  const events=[]; const start=new Date(now); start.setHours(0,0,0,0);
+  // find high-water times across today by stepping the M2 phase
+  for(let t=start.getTime(); t<start.getTime()+30*36e5; t+=TIDE_PERIOD_MIN/2*60000){
+    const phase=((t - M2_EPOCH)/60000) % TIDE_PERIOD_MIN;
+    // nearest high (phase~0) or low (phase~half)
+  }
+  // simpler: generate alternating hi/lo from epoch
+  const half=TIDE_PERIOD_MIN/2;
+  let k=Math.floor((now.getTime()-M2_EPOCH)/60000/half);
+  const out=[];
+  for(let i=-1;i<6;i++){
+    const mins=(k+i)*half;
+    const time=new Date(M2_EPOCH+mins*60000);
+    const type=((k+i)%2===0)?"H":"L";
+    if(time>=start && time<new Date(start.getTime()+30*36e5)) out.push({t:time, type});
+  }
+  return {events:out, source:"est"};
+}
+async function loadTides(){
+  const today=new Date();
+  const f=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+  const qs="station="+TIDE_STATION+"&datum=MLLW&interval=hilo&units=english&time_zone=lst_ldt&format=json&begin_date="+f(today)+"&range=48";
+  // (1) try the Netlify serverless proxy first (handles subordinate-station offsets + any CORS)
+  const attempts=[
+    "/.netlify/functions/tides?"+qs,
+    "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=hartygang_planner&"+qs
+  ];
+  for(const url of attempts){
+    try{
+      const r=await fetch(url); if(!r.ok) continue;
+      const j=await r.json();
+      const preds = j.predictions || (j.data && j.data.predictions) || null;
+      if(preds && preds.length){
+        const events=preds.map(p=>({ t:new Date(p.t.replace(" ","T")), type:p.type, v:p.v }));
+        S.tide={events, source:"noaa"}; S.tideLive=true; renderTide(); return;
+      }
+    }catch(e){ /* try next */ }
+  }
+  // both failed -> keep the estimate (already shown). Mark clearly.
+  S.tideLive=false; renderTide();
+}
+function nextTide(after){
+  if(!S.tide||!S.tide.events) return null;
+  return S.tide.events.find(e=>e.t> (after||new Date())) || S.tide.events[S.tide.events.length-1];
+}
+function tideStateAt(when){
+  // returns {rising:bool, next:event} using the current tide dataset
+  if(!S.tide||!S.tide.events||!S.tide.events.length) return null;
+  const nx=S.tide.events.find(e=>e.t>when);
+  if(!nx) return null;
+  return { rising: nx.type==="H", next:nx };
+}
+
+// ---------- SCORING ENGINE ----------
+function score(day,destKey,depMin,crewKey){
+  const dst=DEST[destKey],crew=CREW[crewKey],dur=travelMin(dst.nm);
+  const out=hourAt(day,depMin),back=hourAt(day,Math.min(depMin+dur*2+120,19*60));
+  const expF=1+dst.exposure*0.28,tol=crew.tol;
+  const waveP=clamp((Math.max(out.wh,back.wh)/(2.8*tol))*expF,0,1.15);
+  const steep=Math.max(out.wh/Math.max(out.wp,1),back.wh/Math.max(back.wp,1));
+  const periodP=clamp((steep/0.55)*expF-0.15,0,1.1);
+  const gustP=clamp((Math.max(out.g,back.g)/(26*tol))*(dst.crossing?1.1:0.85),0,1.15);
+  const windP=clamp(Math.max(out.w,back.w)/(18*tol),0,1);
+  const rainP=clamp(Math.max(out.pp,back.pp)/100,0,1);
+  const parts=[{k:"Wave height",pct:waveP,weight:26},{k:"Period / steepness",pct:periodP,weight:22},{k:"Gusts",pct:gustP,weight:22},{k:"Sustained wind",pct:windP,weight:14},{k:"Rain risk",pct:rainP,weight:8},{k:"Route exposure",pct:clamp(dst.exposure/3,0,1),weight:8}];
+  let pen=0,ws=0; parts.forEach(p=>{pen+=Math.min(p.pct,1)*p.weight;ws+=p.weight;});
+  const sc=Math.round(clamp(100-(pen/ws)*100,0,100));
+  const worst=parts.slice().sort((a,b)=>b.pct*b.weight-a.pct*a.weight)[0];
+  const verdict=sc>=68?"go":sc>=48?"caution":"hold";
+  return {score:sc,verdict,parts,worst,out,back,dur};
+}
+function bestHour(day,destKey,crewKey){ let best=null; for(let h=6;h<=15;h++){ const s=score(day,destKey,h*60,crewKey); if(!best||s.score>best.score) best={h,s}; } return best; }
+function verdictText(v){ return v==="go"?"GOOD TO GO":v==="caution"?"WORKABLE \u2014 STAY SHARP":"HOLD THE RUN"; }
+function verdictColor(v){ return v==="go"?"var(--good)":v==="caution"?"var(--warn)":"var(--bad)"; }
+
+// ---------- ADVISOR ----------
+function detectDest(q){ q=q.toLowerCase(); const map={"sampson":"sampsons-island","cotuit":"cotuit","waquoit":"waquoit","washburn":"waquoit","falmouth":"falmouth","naushon":"naushon","hadley":"naushon","oak bluff":"oak-bluffs","vineyard haven":"vineyard-haven","edgartown":"edgartown","hyannis":"hyannis","nantucket":"nantucket","popponesset":"local","bay loop":"local"}; for(const k in map){ if(q.includes(k)) return map[k]; } return null; }
+function detectDay(q){ q=q.toLowerCase(); if(q.includes("tomorrow")) return 1; for(let i=0;i<S.data.length;i++){ if(q.includes(S.data[i].label.toLowerCase())) return i; } if(q.includes("today")) return 0; return null; }
+function detectTime(q){ q=q.toLowerCase(); if(q.includes("after lunch")||q.includes("afternoon")) return 14*60; if(q.includes("morning")||q.includes("early")) return 8*60; if(q.includes("midday")||q.includes("noon")) return 12*60; if(q.includes("evening")||q.includes("sunset")) return 17*60; const m=q.match(/(\d{1,2})\s*(am|pm)/); if(m){ let h=+m[1]%12; if(m[2]==="pm") h+=12; return h*60; } return null; }
+function tideNote(dayIdx,depMin){
+  // build a Date for the selected day + departure time, then read tide state
+  const base=new Date(); base.setHours(0,0,0,0); base.setDate(base.getDate()+dayIdx);
+  const when=new Date(base.getTime()+depMin*60000);
+  const st=tideStateAt(when);
+  const src = S.tideLive ? "NOAA-confirmed" : "estimated";
+  if(!st) return "Tide timing at the Popponesset entrance ("+src+") is unavailable for that time; check the NOAA station before you go.";
+  const dir = st.rising ? "flooding (rising)" : "ebbing (falling)";
+  const nxt = st.next.type==="H"?"next high":"next low";
+  return "At the Popponesset entrance the tide is "+dir+" around then ("+src+"; "+nxt+" ~"+fmtTime(st.next.t.getHours()*60+st.next.t.getMinutes())+"). An ebb against a SW wind stacks up steeper chop over the bar, so time the bar carefully.";
+}
+function advise(q){
+  const askedDest=detectDest(q),askedDay=detectDay(q),askedTime=detectTime(q);
+  const destKey=askedDest||S.dest,dstName=DEST[destKey].name;
+  const ql=q.toLowerCase();
+  const kidsQ=/kid|child|famil|comfortable|queasy|sick/.test(ql);
+  const crewKey=kidsQ?"family":S.crew;
+  const roughQ=/rough|choppy|bumpy|nasty|safe|okay|\bok\b/.test(ql);
+  const rideHomeQ=/ride home|back|return|get home|coming home/.test(ql);
+  const whichDayQ=/which day|best day|what day|when.*(go|best)/.test(ql);
+  const tideQ=/tide|current|bar\b|ebb|flood/.test(ql);
+  const out=[],tags=[];
+  if(whichDayQ){
+    const ranked=S.data.map((d,i)=>({i,label:d.label,best:bestHour(d,destKey,crewKey)})).sort((a,b)=>b.best.s.score-a.best.s.score);
+    const top=ranked[0];
+    out.push(["BEST DAY","For "+dstName+", "+top.label+" scores best ("+top.best.s.score+"/100), with the cleanest window around "+fmtTime(top.best.h*60)+"."]);
+    out.push(["THE REST","Next best: "+ranked.slice(1,3).map(r=>r.label+" ("+r.best.s.score+")").join(", ")+". Lower-scoring days are driven mainly by "+ranked[ranked.length-1].best.s.worst.k.toLowerCase()+"."]);
+    tags.push(top.label,dstName,CREW[crewKey].label);
+    return {out,tags};
+  }
+  const dayIdx=askedDay!=null?askedDay:S.dayIdx, day=S.data[dayIdx];
+  const depMin=askedTime!=null?askedTime:toMinStr(S.dep);
+  const s=score(day,destKey,depMin,crewKey), o=s.out;
+  out.push(["TRIP CALL", day.label+" for "+dstName+" rates "+s.score+"/100 \u2014 "+verdictText(s.verdict).toLowerCase()+". "+(s.verdict==="go"?"Conditions support the run as planned.":s.verdict==="caution"?"Workable if you stay flexible and watch the build.":"The limiting factor is "+s.worst.k.toLowerCase()+"; consider a protected alternative or a better day.")]);
+  out.push(["CONDITIONS AT "+fmtTime(depMin),"Modeled seas about "+o.wh.toFixed(1)+" ft at "+Math.round(o.wp)+" s from the "+dirName(o.wd)+", wind "+Math.round(o.w)+" kt gusting "+Math.round(o.g)+" kt"+(o.pp>20?", rain chance "+o.pp+"%":"")+"."+(o.wp<5?" That short period means steep, closely-spaced chop \u2014 it will feel rougher than the height alone suggests.":"")]);
+  if(roughQ||askedTime!=null){ const wh=day.hours.reduce((a,b)=>b.wh>a.wh?b:a); out.push(["HOW IT BUILDS","Seas build through the day to about "+wh.wh.toFixed(1)+" ft by "+fmtTime(wh.hour*60)+" as the sea-breeze fills in. "+(depMin>=13*60?"An after-lunch departure lands you in the roughest part of the day.":"Going earlier keeps you ahead of the worst of it.")]); }
+  if(tideQ||rideHomeQ||askedTime!=null){ out.push(["TIDE AT THE BAR",tideNote(dayIdx,depMin)]); }
+  if(rideHomeQ||DEST[destKey].crossing){ const b=s.back; out.push(["THE RIDE HOME","Modeled return around "+fmtTime(Math.min(depMin+s.dur*2+120,19*60))+": ~"+b.wh.toFixed(1)+" ft, gusts to "+Math.round(b.g)+" kt. "+(DEST[destKey].crossing?"The exposed Sound leg west of Popponesset is the hard part \u2014 a building SW puts it on the nose. Keep turn-back options open.":"Sheltered enough that the return should stay manageable.")]); }
+  if(kidsQ){ out.push(["WITH KIDS ABOARD","Judged on a comfort-first profile. "+(s.verdict==="go"?"Should be a comfortable ride for the crew.":s.verdict==="hold"?"Likely uncomfortable for young or sea-prone crew \u2014 I'd wait or pick the bay loop.":"Doable but plan for a bouncy stretch; brief everyone and keep it short.")]); }
+  out.push(["BEFORE LEAVING","Recheck NOAA ANZ232, radar, and actual Popponesset entrance conditions. Sunset is "+fmtTime(day.sunset)+" \u2014 last comfortable return roughly "+fmtTime(day.sunset-60)+". Planning guidance only, not a substitute for the skipper's judgment."]);
+  tags.push(day.label,dstName,CREW[crewKey].label,fmtTime(depMin));
+  return {out,tags};
+}
+
+const qs=s=>document.querySelector(s), qsa=s=>document.querySelectorAll(s);
+function render(){ renderDays(); renderTripCall(); renderLive(); renderBars(); renderPlanner(); renderTide(); }
+function renderLive(){
+  const day=S.data[0], h=hourAt(day,new Date().getHours()*60)||day.hours[Math.floor(day.hours.length/2)];
+  qs("#metrics").innerHTML=[["Wind",Math.round(h.w),"kt "+dirName(h.wdir)],["Gusts",Math.round(h.g),"knots"],["Waves",h.wh.toFixed(1),"feet"],["Period",Math.round(h.wp),"seconds"]].map(m=>'<div class="metric"><div class="k">'+m[0]+'</div><div class="v">'+m[1]+'<small>'+m[2]+'</small></div></div>').join("");
+  qs("#live-updated").textContent="Updated "+(S.updated?S.updated.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}):"\u2014");
+  qs("#live-status").innerHTML=S.live?'<span class="badge live">Live</span> Open-Meteo marine + weather models for the home dock, refreshed on load.':'<span class="badge fallback">Sample data</span> Live models unreachable right now &mdash; showing built-in sample values. Check the linked ANZ232 forecast before departure.';
+  qs("#adv-badge").className="badge "+(S.live?"live":"fallback"); qs("#adv-badge").textContent=S.live?"Live forecast":"Sample data";
+}
+function renderTide(){
+  const badge=qs("#tide-badge"), evEl=qs("#tide-events"); if(!badge) return;
+  if(S.tideLive){ badge.className="badge live"; badge.textContent="NOAA live"; }
+  else { badge.className="badge est"; badge.textContent="Estimated"; }
+  if(!S.tide||!S.tide.events||!S.tide.events.length){ evEl.textContent="Tide data unavailable."; return; }
+  const now=new Date();
+  const upcoming=S.tide.events.filter(e=>e.t>now).slice(0,3);
+  evEl.classList.remove("muted");
+  evEl.innerHTML=upcoming.map(e=>'<span style="margin-right:18px"><small>'+(e.type==="H"?"High":"Low")+'</small>'+fmtTime(e.t.getHours()*60+e.t.getMinutes())+(e.v?' &middot; '+(+e.v).toFixed(1)+' ft':'')+'</span>').join("")
+    + (S.tideLive?'':' <span class="muted" style="font-size:11px">(estimate \u2014 upgrades to NOAA when available)</span>');
+}
+function renderDays(){
+  qs("#days").innerHTML=S.data.map((d,i)=>{ const b=bestHour(d,S.dest,S.crew);
+    return '<div class="day'+(i===S.dayIdx?' sel':'')+'" role="listitem" tabindex="0" data-day="'+i+'"><div class="d">'+d.label+'</div><div class="sky">'+d.sky+'</div><div class="stat"><span>waves</span><b>'+d.whMax.toFixed(1)+' ft</b></div><div class="stat"><span>gusts</span><b>'+Math.round(d.gMax)+' kt</b></div><div class="window '+b.s.verdict+'">'+(b.s.verdict==="go"?"Best bet":b.s.verdict==="caution"?"Workable":"Poor window")+'</div></div>'; }).join("");
+  qsa("#days .day").forEach(el=>{ const go=()=>{S.dayIdx=+el.dataset.day;render();}; el.onclick=go; el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();go();} }; });
+  qs("#build-day").textContent=S.data[S.dayIdx].label;
+}
+function renderTripCall(){
+  const day=S.data[S.dayIdx], s=score(day,S.dest,toMinStr(S.dep),S.crew), b=bestHour(day,S.dest,S.crew);
+  const icon=s.verdict==="go"?"\u2713":s.verdict==="caution"?"!":"\u2715";
+  qs("#tc-body").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:16px">'+day.label+' &middot; '+DEST[S.dest].name+'</div><div class="verdict '+s.verdict+'"><div class="dot">'+icon+'</div><div><div class="label">Score '+s.score+'/100</div><h2>'+verdictText(s.verdict)+'</h2></div></div><p class="muted">'+(s.verdict==="hold"?"Limiting factor: "+s.worst.k.toLowerCase()+". Choose the protected bay loop or move to a better-scoring day.":s.verdict==="caution"?"Workable with care. Watch the "+s.worst.k.toLowerCase()+" and keep the run short.":"Conditions support the plan. Still confirm before you leave.")+'</p><div class="mini"><div><div class="k">Best window</div><div class="v">'+fmtTime(b.h*60)+'</div></div><div><div class="k">Modeled sea</div><div class="v">'+(s.out.wp<5?"Steep, close chop":"Moderate swell")+'</div></div></div>';
+}
+function renderBars(){
+  const day=S.data[S.dayIdx], pts=day.hours.filter(h=>[6,8,10,12,14,16,18].includes(h.hour)), max=Math.max(...pts.map(p=>p.wh),3);
+  qs("#bars").innerHTML=pts.map(p=>'<div class="bcol"><div class="wh">'+p.wh.toFixed(1)+'</div><div class="bar" style="height:'+(p.wh/max*100)+'%"></div><div class="t">'+fmtTime(p.hour*60).replace(":00","")+'</div><div class="p">'+Math.round(p.wp)+'s</div></div>').join("");
+}
+function mapSVG(destKey,s){
+  const dst=DEST[destKey];
+  const dpts={local:[250,300],"sampsons-island":[150,250],cotuit:[130,235],waquoit:[95,270],falmouth:[70,300],naushon:[60,360],"oak-bluffs":[220,430],"vineyard-haven":[180,440],edgartown:[300,450],hyannis:[360,250],nantucket:[430,470],custom:[300,380]};
+  const dest=dpts[destKey]||[250,380], col=verdictColor(s.verdict);
+  let g=""; for(let i=0;i<10;i++){ g+='<line x1="'+(i*50)+'" y1="0" x2="'+(i*50)+'" y2="520" stroke="rgba(255,255,255,.05)"/><line x1="0" y1="'+(i*52)+'" x2="500" y2="'+(i*52)+'" stroke="rgba(255,255,255,.05)"/>'; }
+  return '<svg class="map" viewBox="0 0 500 520" role="img" aria-label="Planning map for '+dst.name+'"><rect width="500" height="520" fill="#0f2233"/>'+g+'<text x="250" y="200" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="3" text-anchor="middle">NANTUCKET SOUND</text><path d="M0,0 L500,0 L500,120 Q300,150 120,150 Q40,155 0,190 Z" fill="#16324a"/><text x="150" y="300" fill="rgba(255,255,255,.25)" font-size="10">POPPONESSET BAY</text><path d="M120,470 Q280,430 360,470 L360,520 L120,520 Z" fill="#16324a"/><text x="240" y="500" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="2" text-anchor="middle">MARTHA\u2019S VINEYARD</text><line x1="250" y1="300" x2="'+dest[0]+'" y2="'+dest[1]+'" stroke="'+col+'" stroke-width="2.5" stroke-dasharray="7 5"/><circle cx="250" cy="300" r="8" fill="#e8694a"/><text x="262" y="304" fill="#fff" font-size="11">Home dock</text><circle cx="'+dest[0]+'" cy="'+dest[1]+'" r="7" fill="'+col+'"/><text x="'+(dest[0]+12)+'" y="'+(dest[1]+4)+'" fill="#fff" font-size="11">'+dst.name+'</text><text x="30" y="42" fill="#f0a58f" font-size="20" font-family="serif">'+dirName(s.out.wdir)+'</text><text x="30" y="60" fill="#9fb2c0" font-size="11">'+Math.round(s.out.w)+'\u2013'+Math.round(s.out.g)+' kt</text></svg>';
+}
+function renderPlanner(){
+  const dst=DEST[S.dest], day=S.data[S.dayIdx], s=score(day,S.dest,toMinStr(S.dep),S.crew);
+  qs("#reco-v").innerHTML='<span class="pin" style="background:'+verdictColor(s.verdict)+'"></span><span>'+verdictText(s.verdict)+' &middot; depart '+fmtTime(toMinStr(S.dep))+'</span>';
+  qs("#score").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Why this score</div>'+s.parts.map(p=>{ const pct=Math.round(Math.min(p.pct,1)*100), col=pct<40?"var(--good)":pct<70?"var(--warn)":"var(--bad)"; return '<div class="barrow"><span>'+p.k+'</span><span class="track"><span class="fill" style="width:'+pct+'%;background:'+col+'"></span></span><span style="text-align:right;color:var(--muted)">'+pct+'</span></div>'; }).join("");
+  qs("#mapwrap").innerHTML=mapSVG(S.dest,s);
+  const dur=travelMin(dst.nm);
+  qs("#brief").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Suggested route brief</div><div class="bh"><h3>'+dst.name+'</h3><span class="nm">'+dst.nm+'<small>nm round trip</small></span></div><p class="muted" style="margin-top:10px">'+dst.note+'</p><div class="stats"><div><div class="k">Underway</div><div class="v">'+Math.floor(dur*2/60)+' hr '+(dur*2%60)+' min</div></div><div><div class="k">General course</div><div class="v">'+dst.course+'</div></div><div><div class="k">Planning fuel</div><div class="v">'+Math.round(dst.nm*0.7)+'\u2013'+Math.round(dst.nm*0.95)+' gal</div></div></div><ul class="legs">'+dst.legs.map((l,i)=>'<li><span class="n">'+(i+1)+'</span><span><b>'+l[0]+'</b><br><span>'+l[1]+'</span></span></li>').join("")+'</ul><p class="disc">Planning concept only &mdash; not a navigational route. Confirm with current charts, local notices, channel conditions, and the chartplotter before leaving the dock.</p>';
+}
+function renderAnswer(res){ qs("#answer").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Advisor answer</div>'+res.out.map(b=>'<h4>'+b[0]+'</h4><p>'+b[1]+'</p>').join("")+'<div class="tags">'+res.tags.map(t=>'<span class="tag">'+t+'</span>').join("")+'</div>'; }
+const CHIPS=["How about Sampson's Island today?","Can we make Naushon tomorrow?","Will Falmouth be rough after lunch?","Which day is best for Oak Bluffs?"];
+function renderChips(){ qs("#chips").innerHTML=CHIPS.map(c=>'<button class="chip">'+c+' <span style="color:var(--coral)">\u2197</span></button>').join(""); qsa("#chips .chip").forEach(b=>b.onclick=()=>{ const q=b.textContent.replace("\u2197","").trim(); qs("#ask").value=q; renderAnswer(advise(q)); }); }
+function init(){
+  const sel=qs("#dest"); sel.innerHTML=ORDER.map(k=>'<option value="'+k+'">'+DEST[k].name+'</option>').join(""); sel.value=S.dest;
+  sel.onchange=()=>{S.dest=sel.value;render();};
+  qs("#crew").onchange=e=>{S.crew=e.target.value;render();};
+  qs("#dep").onchange=e=>{S.dep=e.target.value;render();};
+  qs("#askform").onsubmit=e=>{ e.preventDefault(); const q=qs("#ask").value.trim(); if(q) renderAnswer(advise(q)); };
+  qsa(".linkbtn[data-jump]").forEach(b=>b.onclick=()=>document.getElementById(b.dataset.jump).scrollIntoView({behavior:"smooth"}));
+  qs(".menu-toggle").onclick=()=>{ const n=qs("nav.primary"); const open=n.style.display==="flex"; n.style.cssText=open?"":"display:flex;position:absolute;top:64px;right:24px;background:var(--navy);flex-direction:column;padding:16px;border-radius:8px"; };
+  renderChips(); load();
+}
+init();
+
+</script>
+</body>
+</html>
