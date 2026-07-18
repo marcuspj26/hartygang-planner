@@ -655,6 +655,16 @@ init();
     ".verdict.go .vd-n b{color:var(--good,#2f8f6b)} .verdict.caution .vd-n b{color:var(--warn,#d99a2b)} .verdict.hold .vd-n b{color:var(--bad,#d0563b)}"+
     ".verdict-detail .vd-drv{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#5f7180);margin:12px 0 0}";
   document.head.appendChild(style);
+  function allWired(){
+    var dest=document.getElementById('dest');
+    var qsDest=document.getElementById('qs-dest');
+    var qsDate=document.getElementById('qs-date');
+    var tripdate=document.getElementById('tripdate');
+    var chart=document.getElementById('encchart');
+    var daysWrap=document.querySelector('.days');
+    var qsOk = (!qsDest || qsDest.__hgW) && (!qsDate || qsDate.__hgW);
+    return !!(tripdate && chart && dest && dest.__hgW && daysWrap && daysWrap.__hgW && qsOk);
+  }
   function boot(){
     apply();
     var mo=new MutationObserver(function(){ if(window.__hgVD) return; window.__hgVD=1; setTimeout(function(){window.__hgVD=0; apply();},80); });
@@ -868,7 +878,7 @@ init();
     var tries=0;
     var iv=setInterval(function(){
       ensure(); tries++;
-      if((document.getElementById('tripdate') && document.getElementById('encchart')) || tries>40) clearInterval(iv);
+      if(allWired() || tries>60) clearInterval(iv);
     }, 250);
     ensure();
   }
