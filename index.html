@@ -767,15 +767,50 @@ init();
     var mapwrap=document.querySelector('.mapwrap');
     if(!mapwrap) return;
     var base='https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/MapServer/export';
-    var bbox='-70.78,41.42,-70.20,41.66';
-    var url=base+'?bbox='+bbox+'&bboxSR=4326&imageSR=4326&size=1000,760&format=png&transparent=false&f=image';
+    var HOME={lat:41.5867,lon:-70.4647};
+    var DEST={
+      'local':{lat:41.585,lon:-70.462},
+      'sampsons-island':{lat:41.577,lon:-70.437},
+      'cotuit':{lat:41.615,lon:-70.437},
+      'waquoit':{lat:41.567,lon:-70.535},
+      'falmouth':{lat:41.543,lon:-70.610},
+      'naushon':{lat:41.518,lon:-70.680},
+      'oak-bluffs':{lat:41.457,lon:-70.558},
+      'vineyard-haven':{lat:41.454,lon:-70.604},
+      'edgartown':{lat:41.389,lon:-70.513},
+      'hyannis':{lat:41.638,lon:-70.278},
+      'nantucket':{lat:41.285,lon:-70.096},
+      'custom':null
+    };
+    var ASPECT=1000/760, MINLAT=0.10, PADFRAC=0.35;
+    function bboxFor(key){
+      var d=DEST[key], pts=[HOME]; if(d) pts.push(d);
+      var lats=pts.map(function(p){return p.lat;}), lons=pts.map(function(p){return p.lon;});
+      var minLat=Math.min.apply(null,lats), maxLat=Math.max.apply(null,lats);
+      var minLon=Math.min.apply(null,lons), maxLon=Math.max.apply(null,lons);
+      var cLat=(minLat+maxLat)/2, cLon=(minLon+maxLon)/2;
+      var lonScale=Math.cos(cLat*Math.PI/180);
+      var spanLat=(maxLat-minLat)*(1+2*PADFRAC);
+      var spanLonAsLat=((maxLon-minLon)*lonScale)*(1+2*PADFRAC);
+      if(spanLat<MINLAT) spanLat=MINLAT;
+      var needLonAsLat=spanLat*ASPECT;
+      if(spanLonAsLat<needLonAsLat) spanLonAsLat=needLonAsLat;
+      if(spanLonAsLat/ASPECT>spanLat) spanLat=spanLonAsLat/ASPECT;
+      var halfLat=spanLat/2, halfLonDeg=(spanLonAsLat/lonScale)/2;
+      return (cLon-halfLonDeg).toFixed(4)+','+(cLat-halfLat).toFixed(4)+','+(cLon+halfLonDeg).toFixed(4)+','+(cLat+halfLat).toFixed(4);
+    }
+    function urlFor(key){
+      return base+'?bbox='+bboxFor(key)+'&bboxSR=4326&imageSR=4326&size=1000,760&format=png&transparent=false&f=image';
+    }
+    var dest=document.getElementById('dest');
+    var curKey=dest?dest.value:'oak-bluffs';
     var card=document.createElement('div'); card.id='encchart'; card.style.marginTop='22px';
     var eb=document.createElement('div'); eb.textContent='NAUTICAL CHART \u00B7 REFERENCE ONLY';
     eb.style.cssText='font:600 12px/1.4 system-ui,sans-serif;letter-spacing:.12em;color:#e8694a;margin-bottom:8px;';
     var frame=document.createElement('div');
     frame.style.cssText='border-radius:14px;overflow:hidden;border:1px solid rgba(18,34,47,.12);background:#eaf1f4;box-shadow:0 8px 24px rgba(15,34,51,.08);min-height:120px;';
     var img=document.createElement('img');
-    img.src=url; img.alt='NOAA nautical chart \u2014 Nantucket Sound cruising ground';
+    img.src=urlFor(curKey); img.alt='NOAA nautical chart \u2014 Nantucket Sound cruising ground';
     img.loading='lazy'; img.style.cssText='width:100%;display:block;';
     frame.appendChild(img);
     var cap=document.createElement('div');
@@ -783,6 +818,7 @@ init();
     cap.style.cssText='font:400 12.5px/1.5 system-ui,sans-serif;color:#5f7180;margin-top:9px;';
     card.appendChild(eb); card.appendChild(frame); card.appendChild(cap);
     mapwrap.parentNode.insertBefore(card, mapwrap.nextSibling);
+    if(dest) dest.addEventListener('change', function(){ img.src=urlFor(dest.value); });
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){setTimeout(init,300);});
   else setTimeout(init,300);
