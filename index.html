@@ -844,6 +844,15 @@ init();
     var qsDate=document.getElementById('qs-date');
     if(qsDest && !qsDest.__hgW){ qsDest.__hgW=1; qsDest.addEventListener('change', function(){ syncDest('qs'); }); }
     if(dest && !dest.__hgW){ dest.__hgW=1; dest.addEventListener('change', function(){ syncDest('dest'); }); }
+    if(dest && !dest.__hgDestDayGuard){ dest.__hgDestDayGuard=1; dest.addEventListener('change', function(){
+      var td=document.getElementById('tripdate'); var desired=td?td.value:null;
+      if(desired==null||desired==='') return;
+      setTimeout(function(){
+        var days=dayCards(); var i=days.findIndex(function(d){return d.classList.contains('sel');});
+        var cur=i>=0?days[i].getAttribute('data-day'):null;
+        if(cur!==desired){ var c=document.querySelector('.days .day[data-day="'+desired+'"]'); if(c) c.click(); }
+      }, 700);
+    }); }
     if(qsDate && !qsDate.__hgW){ qsDate.__hgW=1; qsDate.addEventListener('change', function(){ applyDay(qsDate.value, true); }); }
     var daysWrap=document.querySelector('.days');
     if(daysWrap && !daysWrap.__hgW){
