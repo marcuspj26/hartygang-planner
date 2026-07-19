@@ -59,7 +59,8 @@
   "links": {
     "lunchMenu": "https://mashpeemarket.com/menu",
     "marineZoneForecast": "https://marine.weather.gov/MapClick.php?TextType=2&zoneid=ANZ232",
-    "tideStation": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=8447742"
+    "tideStation": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=8447742",
+    "windyEmbed": "https://embed.windy.com/embed.html?type=map&location=coordinates&metricWind=kt&zoom=9&overlay=waves&product=ecmwfWaves&level=surface&lat=41.50&lon=-70.40&detailLat=41.497&detailLon=-70.283&marker=true"
   },
   "advisorChips": [
     "How about Sampson's Island today?",

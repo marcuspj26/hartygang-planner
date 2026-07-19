@@ -54,6 +54,13 @@ nav.primary a:hover{color:#fff;border-color:var(--coral)}
 .buoyline{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:13px}
 .buoyflag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#a9781c;background:rgba(217,154,43,.16);padding:2px 6px;border-radius:4px;margin-left:6px;white-space:nowrap}
 .buoycap{font-size:11px;color:var(--muted);margin-top:4px}
+.soundmap{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.soundmap summary{cursor:pointer;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--coral);list-style:none;display:flex;align-items:center;gap:8px}
+.soundmap summary::-webkit-details-marker{display:none}
+.soundmap summary::after{content:"+";font-size:14px;font-weight:400}
+.soundmap[open] summary::after{content:"\2212"}
+.soundmap-body{margin-top:12px;border-radius:6px;overflow:hidden}
+.soundmap-body iframe{display:block;border:0}
 .live{background:var(--navy2);color:#dfe8ee;padding:26px 0}
 .live-head{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9fb2c0;margin-bottom:14px}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:rgba(255,255,255,.08)}
@@ -190,6 +197,10 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
     <div class="panel" id="tripcall">
       <div class="row"><span>Trip call</span><button class="linkbtn" data-jump="route">Change destination</button></div>
       <div id="tc-body"><p class="muted" style="margin-top:20px">Loading forecast&hellip;</p></div>
+      <details class="soundmap" id="soundmap">
+        <summary>Sound conditions map</summary>
+        <div class="soundmap-body"><iframe title="Live wind and wave map" width="100%" height="420" frameborder="0" loading="lazy"></iframe></div>
+      </details>
     </div>
   </div>
 </div>
@@ -651,6 +662,8 @@ function init(){
   qs("#askform").onsubmit=e=>{ e.preventDefault(); const q=qs("#ask").value.trim(); if(q) renderAnswer(advise(q)); };
   qsa(".linkbtn[data-jump]").forEach(b=>b.onclick=()=>document.getElementById(b.dataset.jump).scrollIntoView({behavior:"smooth"}));
   qs(".menu-toggle").onclick=()=>{ const n=qs("nav.primary"); const open=n.style.display==="flex"; n.style.cssText=open?"":"display:flex;position:absolute;top:64px;right:24px;background:var(--navy);flex-direction:column;padding:16px;border-radius:8px"; };
+  const sm=document.getElementById("soundmap");
+  if(sm){ sm.addEventListener("toggle",()=>{ const f=sm.querySelector("iframe"); if(sm.open&&f&&!f.src) f.src=BOAT.links.windyEmbed; }); }
   renderChips(); load();
 }
 // Expose the engine's patch points for the enhancement scripts below.
