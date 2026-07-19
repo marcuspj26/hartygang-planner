@@ -14,6 +14,7 @@
     "town": "Mashpee, Massachusetts",
     "lat": 41.5867,
     "lon": -70.4647,
+    "timezone": "America/New_York",
     "waterBody": "Nantucket Sound",
     "bayName": "Popponesset Bay",
     "entranceName": "Popponesset entrance",
