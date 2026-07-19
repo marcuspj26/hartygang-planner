@@ -176,7 +176,7 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
     <a class="brand" href="#top"><b>HARTIGANG</b><span>Weather &amp; Sea Planner</span></a>
     <nav class="primary" aria-label="Primary">
       <a href="#outlook">Outlook</a>
-      <a href="#hartygang">The boat</a>
+      <a href="#hartigang">The boat</a>
       <a href="#route">Route plan</a>
       <a href="#advisor">Ask the advisor</a>
       <a href="https://mashpeemarket.com/menu" target="_blank" rel="noopener">Lunch order &#8599;</a>
@@ -255,7 +255,7 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
     </div>
   </div>
 </section>
-<section id="hartygang">
+<section id="hartigang">
   <div class="wrap sec-head">
     <div class="eyebrow">Know the boat</div>
     <h2>Advice shaped for a 2024 EdgeWater 230 CC.</h2>
@@ -637,8 +637,8 @@ function applyBranding(){
   if(lh) lh.innerHTML=B.home.waterBody+" &middot; "+B.marineZone+" &middot; Home dock "+B.home.lat+"&deg; N, "+Math.abs(B.home.lon)+"&deg; W";
   const tl=document.querySelector("#tide .lab"); if(tl) tl.textContent=B.tide.label;
   const ask=qs("#ask"); if(ask) ask.placeholder=C.askPlaceholder;
-  const bs=document.querySelector("#hartygang .sec-head h2"); if(bs) bs.textContent=C.boatSectionTitle;
-  const bp=document.querySelector("#hartygang .boat-split-text p"); if(bp) bp.textContent=C.boatSectionBody;
+  const bs=document.querySelector("#hartigang .sec-head h2"); if(bs) bs.textContent=C.boatSectionTitle;
+  const bp=document.querySelector("#hartigang .boat-split-text p"); if(bp) bp.textContent=C.boatSectionBody;
   const img=document.querySelector("#boatphoto img"); if(img){ img.src=B.vessel.photo; img.alt=B.vessel.photoAlt; }
   const fc=document.querySelector("#boatphoto figcaption"); if(fc) fc.textContent=B.vessel.photoCaption;
   const sg=document.querySelector(".safety-grid");

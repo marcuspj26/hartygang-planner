@@ -13,7 +13,7 @@ export async function fetchNoaaTides({ stationId, proxyPath = "/.netlify/functio
   // (2) then NOAA directly.
   const attempts = [
     proxyPath + "?" + qs,
-    "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=hartygang_planner&" + qs
+    "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=hartigang_planner&" + qs
   ];
   for (const url of attempts) {
     try {

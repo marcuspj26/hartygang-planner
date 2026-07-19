@@ -15,7 +15,7 @@ exports.handler = async function (event) {
 
   const url =
     "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter" +
-    "?product=predictions&application=hartygang_planner&station=" + encodeURIComponent(station) +
+    "?product=predictions&application=hartigang_planner&station=" + encodeURIComponent(station) +
     "&datum=MLLW&interval=hilo&units=english&time_zone=lst_ldt&format=json" +
     "&begin_date=" + begin + "&range=48";
 
