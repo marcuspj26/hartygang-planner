@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hartygang Weather & Sea Planner</title>
+<title>Hartigang Weather & Sea Planner</title>
 <style>
 :root{
   --navy:#0f2233; --navy2:#16324a; --paper:#f4f1ea; --paper2:#e9e4d8;
@@ -173,7 +173,7 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
 <div id="APP">
 <header>
   <div class="wrap bar">
-    <a class="brand" href="#top"><b>HARTYGANG</b><span>Weather &amp; Sea Planner</span></a>
+    <a class="brand" href="#top"><b>HARTIGANG</b><span>Weather &amp; Sea Planner</span></a>
     <nav class="primary" aria-label="Primary">
       <a href="#outlook">Outlook</a>
       <a href="#hartygang">The boat</a>
@@ -190,8 +190,8 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
   <div class="wrap hero-grid">
     <div>
       <div class="eyebrow">New Seabury &middot; Mashpee, Massachusetts</div>
-      <h1>Where should Hartygang go?</h1>
-      <p class="lede">Start with a destination. Hartygang turns the live forecast into a route-specific trip call and a practical read on the ride home.</p>
+      <h1>Where should Hartigang go?</h1>
+      <p class="lede">Start with a destination. Hartigang turns the live forecast into a route-specific trip call and a practical read on the ride home.</p>
       <a class="cta" href="#route">Choose destination &#10230;</a>
     </div>
     <div class="panel" id="tripcall">
@@ -233,14 +233,14 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
 <section id="advisor">
   <div class="wrap adv-grid">
     <div>
-      <div class="eyebrow">Ask the Hartygang advisor</div>
+      <div class="eyebrow">Ask the Hartigang advisor</div>
       <h2>Ask first.<br>Then plan the run.</h2>
       <p class="muted" style="margin-top:16px">Ask a complete question in plain English. The advisor reads your question, the selected day and destination, the hourly build, tide timing, and crew comfort &mdash; and answers the question you actually asked.</p>
       <div class="chips" id="chips"></div>
     </div>
     <div class="advbox">
       <div class="top">
-        <div class="who"><span class="av">H</span> Hartygang advisor</div>
+        <div class="who"><span class="av">H</span> Hartigang advisor</div>
         <span class="badge" id="adv-badge">&mdash;</span>
       </div>
       <form class="askform" id="askform">
@@ -262,12 +262,12 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
     
 <div class="boat-split" style="display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;margin-top:8px;">
   <div class="boat-split-text">
-    <p>Hartygang is a 2024 EdgeWater 230 CC — a 23-foot center console powered by a single 300 HP Yamaha outboard. Hartygang's day starts at the home dock inside Popponesset Bay &mdash; not at a generic Cape Cod waypoint. Every route begins at the home port, clears the local entrance, and weighs the exposed return leg back across Nantucket Sound.</p>
+    <p>Hartigang is a 2024 EdgeWater 230 CC — a 23-foot center console powered by a single 300 HP Yamaha outboard. Hartigang's day starts at the home dock inside Popponesset Bay &mdash; not at a generic Cape Cod waypoint. Every route begins at the home port, clears the local entrance, and weighs the exposed return leg back across Nantucket Sound.</p>
   </div>
   <div class="boat-split-media">
     <figure id="boatphoto" style="max-width:520px;">
-          <img src="./boat-crop.jpg" alt="Hartygang — 2024 EdgeWater 230 CC at anchor" style="width:100%;height:auto;display:block;border-radius:12px;box-shadow:0 8px 30px rgba(15,34,51,0.18);">
-          <figcaption style="margin-top:10px;font-size:13px;color:#5f7180;">Hartygang at anchor — 2024 EdgeWater 230 CC, single 300 HP Yamaha.</figcaption>
+          <img src="./boat-crop.jpg" alt="Hartigang — 2024 EdgeWater 230 CC at anchor" style="width:100%;height:auto;display:block;border-radius:12px;box-shadow:0 8px 30px rgba(15,34,51,0.18);">
+          <figcaption style="margin-top:10px;font-size:13px;color:#5f7180;">Hartigang at anchor — 2024 EdgeWater 230 CC, single 300 HP Yamaha.</figcaption>
         </figure>
   </div>
 </div>
@@ -342,7 +342,7 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
 </section>
 <footer>
   <div class="wrap foot">
-    <div><b>HARTYGANG</b> &nbsp; <span>New Seabury &middot; Mashpee</span></div>
+    <div><b>HARTIGANG</b> &nbsp; <span>New Seabury &middot; Mashpee</span></div>
     <div>Built for the next good day on Nantucket Sound.</div>
     <a href="#top" style="color:#cdd8e0;text-decoration:none">Back to top &#8593;</a>
   </div>
@@ -783,7 +783,7 @@ init();
     qp.innerHTML="<div class=\"qs-row\"><label class=\"qs-l\">Destination</label><select class=\"qs-sel\" id=\"qs-dest\">"+opts+"</select></div>"+
       "<div class=\"qs-row\"><label class=\"qs-l\">Date</label><select class=\"qs-sel\" id=\"qs-date\">"+dopts+"</select></div>"+
       "<button class=\"qs-go\" id=\"qs-go\" disabled>Show my trip call ⟶</button>"+
-      "<p class=\"qs-hint\">Pick a destination and a day — Hartygang delivers the trip call and the ride-home read.</p>";
+      "<p class=\"qs-hint\">Pick a destination and a day — Hartigang delivers the trip call and the ride-home read.</p>";
     heroLeft.appendChild(qp);
     var qd=qp.querySelector("#qs-dest"), qt=qp.querySelector("#qs-date"), go=qp.querySelector("#qs-go");
     function chk(){ go.disabled=!(qd.value&&qt.value); }

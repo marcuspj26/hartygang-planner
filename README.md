@@ -1,6 +1,6 @@
-# Hartygang — Weather & Sea Planner
+# Hartigang — Weather & Sea Planner
 
-A single-page trip planner for the boat **Hartygang**, home-ported at New Seabury,
+A single-page trip planner for the boat **Hartigang**, home-ported at New Seabury,
 Mashpee, Massachusetts. It turns live marine + weather data into a plain-language
 "go / hold" trip call for a set of Nantucket Sound destinations, plus a practical read
 on the ride home.
@@ -91,4 +91,4 @@ This is a planning aid, not a navigation system. Always confirm conditions with
 official NOAA/NWS forecasts and your own judgment before leaving the dock.
 
 # hartygang-planner
-Hartygang Weather &amp; Sea Planner — live keyless marine/weather forecast, sequenced NOAA tides, and a Netlify serverless fallback.
+Hartigang Weather &amp; Sea Planner — live keyless marine/weather forecast, sequenced NOAA tides, and a Netlify serverless fallback.

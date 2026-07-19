@@ -1,13 +1,13 @@
 {
-  "name": "Hartygang",
+  "name": "Hartigang",
   "tagline": "Weather & Sea Planner",
   "vessel": {
     "model": "2024 EdgeWater 230 CC",
     "lengthFt": 23,
     "engine": "single 300 HP Yamaha outboard",
     "photo": "./boat-crop.jpg",
-    "photoAlt": "Hartygang — 2024 EdgeWater 230 CC at anchor",
-    "photoCaption": "Hartygang at anchor — 2024 EdgeWater 230 CC, single 300 HP Yamaha."
+    "photoAlt": "Hartigang — 2024 EdgeWater 230 CC at anchor",
+    "photoCaption": "Hartigang at anchor — 2024 EdgeWater 230 CC, single 300 HP Yamaha."
   },
   "home": {
     "name": "New Seabury",
@@ -75,11 +75,11 @@
   },
   "copy": {
     "heroEyebrow": "New Seabury · Mashpee, Massachusetts",
-    "heroTitle": "Where should Hartygang go?",
-    "heroLede": "Start with a destination. Hartygang turns the live forecast into a route-specific trip call and a practical read on the ride home.",
+    "heroTitle": "Where should Hartigang go?",
+    "heroLede": "Start with a destination. Hartigang turns the live forecast into a route-specific trip call and a practical read on the ride home.",
     "askPlaceholder": "Can we take the kids to Sampson's Island after lunch and still have a comfortable ride home?",
     "boatSectionTitle": "Advice shaped for a 2024 EdgeWater 230 CC.",
-    "boatSectionBody": "Hartygang is a 2024 EdgeWater 230 CC — a 23-foot center console powered by a single 300 HP Yamaha outboard. Hartygang's day starts at the home dock inside Popponesset Bay — not at a generic Cape Cod waypoint. Every route begins at the home port, clears the local entrance, and weighs the exposed return leg back across Nantucket Sound.",
+    "boatSectionBody": "Hartigang is a 2024 EdgeWater 230 CC — a 23-foot center console powered by a single 300 HP Yamaha outboard. Hartigang's day starts at the home dock inside Popponesset Bay — not at a generic Cape Cod waypoint. Every route begins at the home port, clears the local entrance, and weighs the exposed return leg back across Nantucket Sound.",
     "footerTag": "Built for the next good day on Nantucket Sound."
   },
   "safetyCards": [
