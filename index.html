@@ -967,5 +967,78 @@ init();
   if(document.readyState!=='loading')hook();else document.addEventListener('DOMContentLoaded',hook);
 })();
 </script>
+
+<!-- Fix: best-departure-window search + hero compass-rose placeholder -->
+<script>
+(function(){
+  window.__hgBestHourFix=1;
+  /* ---- TASK 1: correct bestHour to scan the full daylight window ---- */
+  function installBestHourFix(){
+    if(typeof window.bestHour!=='function'||typeof window.score!=='function')return false;
+    if(window.__bestHourPatched)return true;
+    var ORIG=window.bestHour, SCORE=window.score;
+    window.bestHour=function(day,dest,crew){
+      try{
+        var sr=(typeof day.sunrise==='number')?day.sunrise:6*60;
+        var ss=(typeof day.sunset==='number')?day.sunset:20*60;
+        var startMin=Math.max(sr,5*60);
+        var endMin=Math.max(startMin+60,ss-30);
+        var first=Math.ceil(startMin/30)*30;
+        var best=null;
+        for(var m=first;m<=endMin;m+=30){
+          var s;try{s=SCORE(day,dest,m,crew);}catch(e){continue;}
+          if(!s||typeof s.score!=='number')continue;
+          if(best===null||s.score>best.s.score){best={h:Math.floor(m/60),min:m,s:s};}
+        }
+        return best===null?ORIG.apply(this,arguments):best;
+      }catch(e){return ORIG.apply(this,arguments);}
+    };
+    window.__bestHourPatched=true;
+    try{if(typeof window.renderTripCall==='function')window.renderTripCall();}catch(e){}
+    return true;
+  }
+  /* ---- TASK 2: compass-rose placeholder shown before the trip call answer ---- */
+  var NS='http://www.w3.org/2000/svg';
+  function el(n,a){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  function buildRose(){
+    var svg=el('svg',{viewBox:'0 0 240 240',width:230,height:230});
+    var CX=120,CY=120,R=104;
+    svg.appendChild(el('circle',{cx:CX,cy:CY,r:R,fill:'none',stroke:'rgba(255,255,255,.22)','stroke-width':2}));
+    svg.appendChild(el('circle',{cx:CX,cy:CY,r:R-26,fill:'none',stroke:'rgba(255,255,255,.12)','stroke-width':1.5}));
+    for(var i=0;i<72;i++){var ang=i*5*Math.PI/180;var r1=R,r2=(i%2===0)?R-9:R-5;svg.appendChild(el('line',{x1:CX+r1*Math.sin(ang),y1:CY-r1*Math.cos(ang),x2:CX+r2*Math.sin(ang),y2:CY-r2*Math.cos(ang),stroke:'rgba(255,255,255,.28)','stroke-width':1}));}
+    function dia(deg,len,wid,col){var a=deg*Math.PI/180;var tip=[CX+len*Math.sin(a),CY-len*Math.cos(a)];var b1=[CX+wid*Math.sin(a+Math.PI/2),CY-wid*Math.cos(a+Math.PI/2)];var b2=[CX+wid*Math.sin(a-Math.PI/2),CY-wid*Math.cos(a-Math.PI/2)];svg.appendChild(el('polygon',{points:tip.join(',')+' '+b1.join(',')+' '+CX+','+CY+' '+b2.join(','),fill:col}));}
+    [[0,'#e8694a'],[90,'rgba(255,255,255,.85)'],[180,'rgba(255,255,255,.85)'],[270,'rgba(255,255,255,.85)']].forEach(function(c){dia(c[0],R-34,10,c[1]);});
+    [45,135,225,315].forEach(function(deg){dia(deg,R-58,7,'rgba(255,255,255,.4)');});
+    svg.appendChild(el('circle',{cx:CX,cy:CY,r:32,fill:'#e8694a'}));
+    var q=el('text',{x:CX,y:CY+14,'text-anchor':'middle','font-size':42,'font-weight':700,fill:'#fff','font-family':'Georgia,serif'});q.textContent='?';svg.appendChild(q);
+    var nl=el('text',{x:CX,y:24,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'#e8694a'});nl.textContent='N';svg.appendChild(nl);
+    return svg;
+  }
+  function installPlaceholder(){
+    var tc=document.getElementById('tripcall');
+    if(!tc)return false;
+    var grid=tc.parentElement;if(!grid)return false;
+    if(document.getElementById('qs-placeholder'))return true;
+    var ph=document.createElement('div');ph.id='qs-placeholder';
+    ph.style.cssText='grid-column:2;grid-row:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;align-self:stretch;';
+    ph.appendChild(buildRose());
+    var cap=document.createElement('div');
+    cap.style.cssText='margin-top:20px;max-width:300px;color:rgba(255,255,255,.55);font-size:15px;line-height:1.55;';
+    cap.textContent='Pick a destination and day, then hit the trip-call button \u2014 your go/no-go read appears here.';
+    ph.appendChild(cap);
+    grid.appendChild(ph);
+    tc.style.gridColumn='2';tc.style.gridRow='1';
+    Array.prototype.forEach.call(grid.children,function(c){if(c!==tc&&c!==ph){c.style.gridColumn='1';c.style.gridRow='1';}});
+    function sync(){var hidden=tc.getAttribute('data-qs-hidden')==='1';ph.style.display=hidden?'flex':'none';tc.style.visibility=hidden?'hidden':'';}
+    try{var mo=new MutationObserver(sync);mo.observe(tc,{attributes:true,attributeFilter:['data-qs-hidden']});}catch(e){}
+    sync();
+    return true;
+  }
+  var tries=0;
+  var iv=setInterval(function(){tries++;var a=installBestHourFix();var b=installPlaceholder();if((a&&b)||tries>80)clearInterval(iv);},250);
+  function boot(){installBestHourFix();installPlaceholder();}
+  if(document.readyState!=='loading')boot();else document.addEventListener('DOMContentLoaded',boot);
+})();
+</script>
 </body>
 </html>
