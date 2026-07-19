@@ -6,7 +6,7 @@
 <title>Hartigang Weather & Sea Planner</title>
 <style>
 :root{
-  --navy:#0f2233; --navy2:#16324a; --paper:#f4f1ea; --paper2:#e9e4d8;
+  --navy:#0E3E43; --navy2:#155B63; --paper:#f4f1ea; --paper2:#e9e4d8;
   --coral:#e8694a; --ink:#12222f; --muted:#5f7180; --line:rgba(15,34,51,.14);
   --good:#2f8f6b; --warn:#d99a2b; --bad:#d0563b;
   --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
@@ -712,7 +712,7 @@ function mapSVG(destKey,s){
   const dst=DEST[destKey];
   const dest=dst.mapXY||[250,380], col=verdictColor(s.verdict);
   let g=""; for(let i=0;i<10;i++){ g+='<line x1="'+(i*50)+'" y1="0" x2="'+(i*50)+'" y2="520" stroke="rgba(255,255,255,.05)"/><line x1="0" y1="'+(i*52)+'" x2="500" y2="'+(i*52)+'" stroke="rgba(255,255,255,.05)"/>'; }
-  return '<svg class="map" viewBox="0 0 500 520" role="img" aria-label="Planning map for '+dst.name+'"><rect width="500" height="520" fill="#0f2233"/>'+g+'<text x="250" y="200" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="3" text-anchor="middle">'+BOAT.home.waterBody.toUpperCase()+'</text><path d="M0,0 L500,0 L500,120 Q300,150 120,150 Q40,155 0,190 Z" fill="#16324a"/><text x="150" y="300" fill="rgba(255,255,255,.25)" font-size="10">'+BOAT.home.bayName.toUpperCase()+'</text><path d="M120,470 Q280,430 360,470 L360,520 L120,520 Z" fill="#16324a"/><text x="240" y="500" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="2" text-anchor="middle">'+BOAT.home.southLandmassLabel.toUpperCase()+'</text><line x1="250" y1="300" x2="'+dest[0]+'" y2="'+dest[1]+'" stroke="'+col+'" stroke-width="2.5" stroke-dasharray="7 5"/><circle cx="250" cy="300" r="8" fill="#e8694a"/><text x="262" y="304" fill="#fff" font-size="11">Home dock</text><circle cx="'+dest[0]+'" cy="'+dest[1]+'" r="7" fill="'+col+'"/><text x="'+(dest[0]+12)+'" y="'+(dest[1]+4)+'" fill="#fff" font-size="11">'+dst.name+'</text><text x="30" y="42" fill="#f0a58f" font-size="20" font-family="serif">'+dirName(s.out.wdir)+'</text><text x="30" y="60" fill="#9fb2c0" font-size="11">'+Math.round(s.out.w)+'\u2013'+Math.round(s.out.g)+' kt</text></svg>';
+  return '<svg class="map" viewBox="0 0 500 520" role="img" aria-label="Planning map for '+dst.name+'"><rect width="500" height="520" fill="#0E3E43"/>'+g+'<text x="250" y="200" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="3" text-anchor="middle">'+BOAT.home.waterBody.toUpperCase()+'</text><path d="M0,0 L500,0 L500,120 Q300,150 120,150 Q40,155 0,190 Z" fill="#155B63"/><text x="150" y="300" fill="rgba(255,255,255,.25)" font-size="10">'+BOAT.home.bayName.toUpperCase()+'</text><path d="M120,470 Q280,430 360,470 L360,520 L120,520 Z" fill="#155B63"/><text x="240" y="500" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="2" text-anchor="middle">'+BOAT.home.southLandmassLabel.toUpperCase()+'</text><line x1="250" y1="300" x2="'+dest[0]+'" y2="'+dest[1]+'" stroke="'+col+'" stroke-width="2.5" stroke-dasharray="7 5"/><circle cx="250" cy="300" r="8" fill="#e8694a"/><text x="262" y="304" fill="#fff" font-size="11">Home dock</text><circle cx="'+dest[0]+'" cy="'+dest[1]+'" r="7" fill="'+col+'"/><text x="'+(dest[0]+12)+'" y="'+(dest[1]+4)+'" fill="#fff" font-size="11">'+dst.name+'</text><text x="30" y="42" fill="#f0a58f" font-size="20" font-family="serif">'+dirName(s.out.wdir)+'</text><text x="30" y="60" fill="#9fb2c0" font-size="11">'+Math.round(s.out.w)+'\u2013'+Math.round(s.out.g)+' kt</text></svg>';
 }
 function renderPlanner(){
   const dst=DEST[S.dest], day=S.data[S.dayIdx], s=score(day,S.dest,toMinStr(S.dep),S.crew);
