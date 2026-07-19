@@ -5,7 +5,7 @@ Mashpee, Massachusetts. It turns live marine + weather data into a plain-languag
 "go / hold" trip call for a set of Nantucket Sound destinations, plus a practical read
 on the ride home.
 
-**Live site:** https://hartygang-planner.netlify.app
+**Live site:** https://hartigang-planner.netlify.app
 
 Home dock: **41.5867 N, 70.4647 W** (NWS marine zone ANZ232).
 
