@@ -773,6 +773,38 @@ function renderBoard(){
     +'<div class="brow-meta"><span>'+r.oneWay+' nm one-way</span><span>'+fmtDur(r.tow)+' on water</span></div>'
     +'</div>').join("")+'</div>').join("");
 }
+// Row tap-through: drive the existing query-state mechanism (destination +
+// date + go) so the trip-call view opens exactly as if picked by hand, with
+// the board's departure time applied through the planner's own control.
+function openTrip(destId, dayIdx, push){
+  const qd=qs("#qs-dest"), qt=qs("#qs-date"), go=qs("#qs-go");
+  if(!qd||!qt||!go||!DEST[destId]) return;
+  if(push) history.pushState({hgTrip:[destId,dayIdx]},"","#trip-"+destId+"-d"+dayIdx);
+  const depEl=qs("#dep");
+  if(depEl&&depEl.value!==BOARD.dep){ depEl.value=BOARD.dep; depEl.dispatchEvent(new Event("change",{bubbles:true})); }
+  qd.value=destId; qd.dispatchEvent(new Event("change",{bubbles:true}));
+  qt.value=String(dayIdx); qt.dispatchEvent(new Event("change",{bubbles:true}));
+  go.click();
+  const vh=()=>window.innerHeight||document.documentElement.clientHeight||800;
+  const sc=()=>{ const r=document.getElementById("tripcall").getBoundingClientRect();
+    window.scrollTo({top:Math.max(0,window.scrollY+r.top-(vh()-r.height)/2),behavior:"smooth"}); };
+  sc();
+  // The browser's own post-load scroll handling (fresh-navigation restore, or
+  // an unresolvable #trip-... fragment) can override the first scroll on deep
+  // links; re-scroll once things settle if the trip call isn't in view.
+  setTimeout(()=>{ const t=document.getElementById("tripcall").getBoundingClientRect().top; if(t<0||t>vh()) sc(); },900);
+}
+window.addEventListener("popstate",e=>{
+  if(e.state&&e.state.hgTrip) openTrip(e.state.hgTrip[0],e.state.hgTrip[1],false);
+  else document.getElementById("board").scrollIntoView({behavior:"smooth"});
+});
+// Deep link: #trip-<dest>-d<day> opens that trip call once the query-state
+// controls exist (hg:qs-ready fires when the hero panel is built).
+document.addEventListener("hg:qs-ready",function once(){
+  document.removeEventListener("hg:qs-ready",once);
+  const m=location.hash.match(/^#trip-([a-z-]+)-d([0-4])$/);
+  if(m&&DEST[m[1]]){ history.replaceState({hgTrip:[m[1],+m[2]]},""); setTimeout(()=>openTrip(m[1],+m[2],false),150); }
+});
 // Debug handle for date-dependent board logic (weekend pairing can only be
 // exercised live on certain weekdays; tests override BOARD.baseDate).
 window.HG.board={ BOARD, renderBoard, weekendPair, defaultBoardDay, dayDate };
@@ -820,6 +852,12 @@ function init(){
   const bday=qs("#board-day"), bdep=qs("#board-dep");
   if(bday) bday.onchange=e=>{ BOARD.dayIdx=+e.target.value; renderBoard(); };
   if(bdep){ bdep.value=BOARD.dep; bdep.onchange=e=>{ BOARD.dep=e.target.value||"09:00"; renderBoard(); }; }
+  const bcols=qs("#board-cols");
+  if(bcols){
+    const tap=el=>{ const row=el.closest(".brow"); if(row&&!row.classList.contains("pending")) openTrip(row.dataset.dest,+row.dataset.day,true); };
+    bcols.addEventListener("click",e=>tap(e.target));
+    bcols.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); tap(e.target); } });
+  }
   renderBoard();
   renderChips(); load();
 }
