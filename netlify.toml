@@ -8,3 +8,9 @@
   from = "/api/tides"
   to = "/.netlify/functions/tides"
   status = 200
+
+# Same-origin proxy for NDBC buoy observations (NDBC sends no CORS headers)
+[[redirects]]
+  from = "/api/buoy/*"
+  to = "https://www.ndbc.noaa.gov/data/realtime2/:splat"
+  status = 200

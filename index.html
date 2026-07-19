@@ -51,6 +51,9 @@ nav.primary a:hover{color:#fff;border-color:var(--coral)}
 .mini{display:grid;grid-template-columns:1fr 1fr;gap:18px 28px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
 .mini .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .mini .v{font-family:var(--serif);font-size:17px}
+.buoyline{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:13px}
+.buoyflag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#a9781c;background:rgba(217,154,43,.16);padding:2px 6px;border-radius:4px;margin-left:6px;white-space:nowrap}
+.buoycap{font-size:11px;color:var(--muted);margin-top:4px}
 .live{background:var(--navy2);color:#dfe8ee;padding:26px 0}
 .live-head{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9fb2c0;margin-bottom:14px}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:rgba(255,255,255,.08)}
@@ -337,6 +340,7 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
 <script type="module">
 import { fetchOpenMeteo } from "./js/adapters/openMeteo.js";
 import { fetchNoaaTides } from "./js/adapters/noaaTides.js";
+import { fetchNdbcBuoy } from "./js/adapters/ndbcBuoy.js";
 
 async function loadJSON(url){ const r=await fetch(url); if(!r.ok) throw new Error(url+" -> HTTP "+r.status); return r.json(); }
 const [BOAT, DEST_LIST] = await Promise.all([
@@ -374,6 +378,40 @@ async function load(){
   S.tide=estimateTides(new Date()); S.tideLive=false;
   render();
   loadTides();
+  loadBuoy();
+}
+// ---------- BUOY OBSERVATIONS (NDBC, sequenced after first render) ----------
+async function loadBuoy(){
+  S.buoy=null;
+  const cfg=BOAT.buoy;
+  if(!cfg||!cfg.stationId) return;
+  try{
+    const res=await fetchNdbcBuoy({ stationId:cfg.stationId });
+    const now=Date.now(), maxAge=cfg.maxAgeMin||90;
+    const age=p=>Math.round((now-Date.parse(p.time))/60000);
+    const windP=res.points.find(p=>p.windKts!=null&&age(p)<=maxAge)||null;
+    const waveP=res.points.find(p=>p.waveFt!=null&&age(p)<=maxAge)||null;
+    if(windP||waveP){
+      // conservative age: the older of the rows actually shown
+      S.buoy={ windP, waveP, ageMin:Math.max(...[windP,waveP].filter(Boolean).map(age)) };
+    }
+  }catch(e){ S.buoy=null; } // feed down or stale -> show nothing rather than stale-as-current
+  window.renderTripCall();
+}
+function buoyDrift(){
+  if(!S.buoy||!S.buoy.waveP||!S.data) return false;
+  const h=hourAt(S.data[0],new Date().getHours()*60);
+  if(!h||!(h.wh>0)) return false;
+  return S.buoy.waveP.waveFt>=h.wh*(BOAT.buoy.driftRatio||1.3);
+}
+function buoyHTML(){
+  if(!S.buoy) return "";
+  const b=S.buoy, bits=[];
+  if(b.windP){ const d=b.windP.windDirDeg; bits.push((d!=null?dirName(d)+" ":"")+Math.round(b.windP.windKts)+" kt"); }
+  if(b.waveP) bits.push(b.waveP.waveFt.toFixed(1)+" ft");
+  return '<div class="buoyline">'+BOAT.buoy.label+', '+b.ageMin+' min ago: '+bits.join(", ")
+    +(buoyDrift()?' <span class="buoyflag">running above forecast</span>':'')
+    +'</div><div class="buoycap">'+BOAT.buoy.caption+'</div>';
 }
 function toMin(iso){ const t=iso.split("T")[1]; return (+t.split(":")[0])*60+(+t.split(":")[1]); }
 // Build the app's per-day view model from the normalized adapter shape.
@@ -551,7 +589,7 @@ function renderDays(){
 function renderTripCall(){
   const day=S.data[S.dayIdx], s=score(day,S.dest,toMinStr(S.dep),S.crew), b=window.bestHour(day,S.dest,S.crew);
   const icon=s.verdict==="go"?"\u2713":s.verdict==="caution"?"!":"\u2715";
-  qs("#tc-body").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:16px">'+day.label+' &middot; '+DEST[S.dest].name+'</div><div class="verdict '+s.verdict+'"><div class="dot">'+icon+'</div><div><div class="label">Score '+s.score+'/100</div><h2>'+verdictText(s.verdict)+'</h2></div></div><p class="muted">'+(s.verdict==="hold"?"Limiting factor: "+s.worst.k.toLowerCase()+". Choose the protected bay loop or move to a better-scoring day.":s.verdict==="caution"?"Workable with care. Watch the "+s.worst.k.toLowerCase()+" and keep the run short.":"Conditions support the plan. Still confirm before you leave.")+'</p><div class="mini"><div><div class="k">Best window</div><div class="v">'+fmtTime(b.h*60)+'</div></div><div><div class="k">Modeled sea</div><div class="v">'+(s.out.wp<5?"Steep, close chop":"Moderate swell")+'</div></div></div>';
+  qs("#tc-body").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:16px">'+day.label+' &middot; '+DEST[S.dest].name+'</div><div class="verdict '+s.verdict+'"><div class="dot">'+icon+'</div><div><div class="label">Score '+s.score+'/100</div><h2>'+verdictText(s.verdict)+'</h2></div></div><p class="muted">'+(s.verdict==="hold"?"Limiting factor: "+s.worst.k.toLowerCase()+". Choose the protected bay loop or move to a better-scoring day.":s.verdict==="caution"?"Workable with care. Watch the "+s.worst.k.toLowerCase()+" and keep the run short.":"Conditions support the plan. Still confirm before you leave.")+'</p><div class="mini"><div><div class="k">Best window</div><div class="v">'+fmtTime(b.h*60)+'</div></div><div><div class="k">Modeled sea</div><div class="v">'+(s.out.wp<5?"Steep, close chop":"Moderate swell")+'</div></div></div>'+buoyHTML();
 }
 function renderBars(){
   const day=S.data[S.dayIdx], pts=day.hours.filter(h=>[6,8,10,12,14,16,18].includes(h.hour)), max=Math.max(...pts.map(p=>p.wh),3);
