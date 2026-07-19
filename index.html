@@ -177,6 +177,7 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
 .brow-why{font-size:13px;color:var(--muted);margin-top:6px}
 .brow-meta{display:flex;gap:18px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:8px}
 .brow.pending .window{background:var(--paper2);color:var(--muted)}
+.board-map{margin-top:26px;border-top-color:rgba(255,255,255,.14)}
 .board-note{font-size:13px;color:#9fb2c0;margin:18px 0 0}
 .board-note a{color:#f0a58f}
 @media(max-width:900px){
@@ -218,6 +219,10 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
       <div><label for="board-dep">Departure</label><input id="board-dep" type="time" value="09:00"></div>
     </div>
     <div class="board-cols" id="board-cols"></div>
+    <details class="soundmap board-map" id="board-soundmap">
+      <summary>Sound conditions map</summary>
+      <div class="soundmap-body"><iframe title="Live wind and wave map" width="100%" height="420" frameborder="0" loading="lazy"></iframe></div>
+    </details>
     <p class="board-note">Tap a destination for its full trip call &mdash; or start from a destination in the <a href="#route">planner below</a>.</p>
   </div>
 </section>
@@ -847,8 +852,8 @@ function init(){
   qs("#askform").onsubmit=e=>{ e.preventDefault(); const q=qs("#ask").value.trim(); if(q) renderAnswer(advise(q)); };
   qsa(".linkbtn[data-jump]").forEach(b=>b.onclick=()=>document.getElementById(b.dataset.jump).scrollIntoView({behavior:"smooth"}));
   qs(".menu-toggle").onclick=()=>{ const n=qs("nav.primary"); const open=n.style.display==="flex"; n.style.cssText=open?"":"display:flex;position:absolute;top:64px;right:24px;background:var(--navy);flex-direction:column;padding:16px;border-radius:8px"; };
-  const sm=document.getElementById("soundmap");
-  if(sm){ sm.addEventListener("toggle",()=>{ const f=sm.querySelector("iframe"); if(sm.open&&f&&!f.src) f.src=BOAT.links.windyEmbed; }); }
+  // Both the trip-call and weekend-board maps lazy-load the same embed on expand.
+  qsa(".soundmap").forEach(sm=>{ sm.addEventListener("toggle",()=>{ const f=sm.querySelector("iframe"); if(sm.open&&f&&!f.src) f.src=BOAT.links.windyEmbed; }); });
   const bday=qs("#board-day"), bdep=qs("#board-dep");
   if(bday) bday.onchange=e=>{ BOARD.dayIdx=+e.target.value; renderBoard(); };
   if(bdep){ bdep.value=BOARD.dep; bdep.onchange=e=>{ BOARD.dep=e.target.value||"09:00"; renderBoard(); }; }
