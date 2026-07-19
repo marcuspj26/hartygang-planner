@@ -159,7 +159,28 @@ svg.map{width:100%;height:auto;display:block}
 footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid rgba(255,255,255,.1)}
 .foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
 .foot b{color:#fff;font-family:var(--serif);letter-spacing:.1em;font-size:16px}
+#board{background:var(--navy);color:#eef2f5;padding:48px 0 56px;border-bottom:1px solid rgba(255,255,255,.08)}
+#board .sec-head{margin-bottom:22px}
+#board .sec-head h2{color:#fff}
+.board-controls{display:flex;gap:28px;flex-wrap:wrap;margin:0 0 24px}
+.board-controls label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9fb2c0;font-weight:700;margin-bottom:8px}
+.board-controls select,.board-controls input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:12px;color:#fff;font-family:var(--serif);font-size:17px;padding:10px 14px;outline:none}
+.board-controls option{color:var(--ink)}
+.board-cols{display:grid;grid-template-columns:1fr;gap:26px}
+.board-cols.two{grid-template-columns:1fr 1fr}
+.bcol-head{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#9fb2c0;margin-bottom:12px}
+.brow{background:var(--paper);color:var(--ink);border-radius:8px;padding:14px 18px;margin-bottom:10px;cursor:pointer;transition:.15s;border:1px solid transparent}
+.brow:hover,.brow:focus-visible{border-color:var(--coral);outline:none}
+.brow-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brow-name{font-family:var(--serif);font-size:18px;font-weight:600}
+.brow .window{margin-top:0;flex:0 0 auto}
+.brow-why{font-size:13px;color:var(--muted);margin-top:6px}
+.brow-meta{display:flex;gap:18px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.brow.pending .window{background:var(--paper2);color:var(--muted)}
+.board-note{font-size:13px;color:#9fb2c0;margin:18px 0 0}
+.board-note a{color:#f0a58f}
 @media(max-width:900px){
+  .board-cols.two{grid-template-columns:1fr}
   nav.primary,.mode{display:none}
   .menu-toggle{display:block}
   .hero-grid,.adv-grid,.plan-grid{grid-template-columns:1fr}
@@ -186,6 +207,20 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
     <button class="menu-toggle" aria-label="Toggle menu">Menu</button>
   </div>
 </header>
+<section id="board">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">The weekend board</div>
+      <h2>Every destination, ranked for the day.</h2>
+    </div>
+    <div class="board-controls">
+      <div><label for="board-day">Day</label><select id="board-day"></select></div>
+      <div><label for="board-dep">Departure</label><input id="board-dep" type="time" value="09:00"></div>
+    </div>
+    <div class="board-cols" id="board-cols"></div>
+    <p class="board-note">Tap a destination for its full trip call &mdash; or start from a destination in the <a href="#route">planner below</a>.</p>
+  </div>
+</section>
 <div class="hero">
   <div class="wrap hero-grid">
     <div>
@@ -379,9 +414,23 @@ function fallback(){
     return {label:days[i],sky:"Partly cloudy",whMax:s.wh,gMax:s.g,hours,sunrise:5*60+23,sunset:20*60+12};
   });
 }
+// Per-point forecast cache. Every destination currently scores off the single
+// home-dock sample point, so the board and the planner share ONE 5-day fetch —
+// scoring 14 destinations costs zero extra calls. If routes ever get their own
+// sample points, request them through here: calls are memoized per coordinate,
+// so only genuinely distinct points hit Open-Meteo.
+const FORECAST_CACHE=new Map();
+function getForecast(lat,lon){
+  const key=lat.toFixed(3)+","+lon.toFixed(3);
+  if(!FORECAST_CACHE.has(key)){
+    FORECAST_CACHE.set(key, fetchOpenMeteo({ lat, lon, days:5, timezone:BOAT.home.timezone })
+      .catch(e=>{ FORECAST_CACHE.delete(key); throw e; }));
+  }
+  return FORECAST_CACHE.get(key);
+}
 async function load(){
   try{
-    const fc=await fetchOpenMeteo({ lat:HOME.lat, lon:HOME.lon, days:5, timezone:BOAT.home.timezone });
+    const fc=await getForecast(HOME.lat,HOME.lon);
     S.data=buildDays(fc); S.live=true;
   }catch(e){ S.data=fallback(); S.live=false; }
   S.updated=new Date();
@@ -625,7 +674,7 @@ function advise(q){
 }
 
 const qs=s=>document.querySelector(s), qsa=s=>document.querySelectorAll(s);
-function render(){ renderDays(); renderTripCall(); renderLive(); renderBars(); renderPlanner(); renderTide(); }
+function render(){ renderDays(); renderTripCall(); renderLive(); renderBars(); renderPlanner(); renderTide(); renderBoard(); }
 function renderLive(){
   const day=S.data[0], h=hourAt(day,new Date().getHours()*60)||day.hours[Math.floor(day.hours.length/2)];
   qs("#metrics").innerHTML=[["Wind",Math.round(h.w),"kt "+dirName(h.wdir)],["Gusts",Math.round(h.g),"knots"],["Waves",h.wh.toFixed(1),"feet"],["Period",Math.round(h.wp),"seconds"]].map(m=>'<div class="metric"><div class="k">'+m[0]+'</div><div class="v">'+m[1]+'<small>'+m[2]+'</small></div></div>').join("");
@@ -677,6 +726,56 @@ function renderPlanner(){
 function renderAnswer(res){ qs("#answer").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Advisor answer</div>'+res.out.map(b=>'<h4>'+b[0]+'</h4><p>'+b[1]+'</p>').join("")+'<div class="tags">'+res.tags.map(t=>'<span class="tag">'+t+'</span>').join("")+'</div>'; }
 const CHIPS=BOAT.advisorChips;
 function renderChips(){ qs("#chips").innerHTML=CHIPS.map(c=>'<button class="chip">'+c+' <span style="color:var(--coral)">\u2197</span></button>').join(""); qsa("#chips .chip").forEach(b=>b.onclick=()=>{ const q=b.textContent.replace("\u2197","").trim(); qs("#ask").value=q; renderAnswer(advise(q)); }); }
+// ---------- WEEKEND BOARD (default view: every destination ranked for a day) ----------
+const BOARD={ dayIdx:null, dep:"09:00", baseDate:null /* debug override for date-dependent tests */ };
+function dayDate(i){ const d=BOARD.baseDate?new Date(BOARD.baseDate):new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+i); return d; }
+function isWeekendDay(i){ const dow=dayDate(i).getDay(); return dow===0||dow===6; }
+// Next Saturday if it falls inside the 5-day forecast window; today when today
+// is already Sat/Sun (or Saturday is out of range).
+function defaultBoardDay(){
+  if(isWeekendDay(0)) return 0;
+  for(let i=1;i<5;i++){ if(dayDate(i).getDay()===6) return i; }
+  return 0;
+}
+// When the selected day is a weekend day and its partner falls inside the
+// forecast window, show both side by side.
+function weekendPair(sel){
+  const dow=dayDate(sel).getDay();
+  if(dow===6 && sel+1<5 && dayDate(sel+1).getDay()===0) return [sel,sel+1];
+  if(dow===0 && sel-1>=0 && dayDate(sel-1).getDay()===6) return [sel-1,sel];
+  return [sel];
+}
+function boardChip(v){ return v==="go"?"GOOD TO GO":v==="caution"?"WORKABLE":"NOT TODAY"; }
+function fmtDur(min){ return Math.floor(min/60)+" hr "+(min%60)+" min"; }
+function boardRows(dayIdx){
+  const rank={go:0,caution:1,hold:2};
+  const rows=ORDER.filter(k=>k!=="custom").map(k=>{
+    const d=DEST[k], base={destId:k,name:d.name,oneWay:d.nmRoundTrip/2,tow:travelMin(d.nmRoundTrip)*2};
+    if(!S.data) return Object.assign(base,{pending:true});
+    const s=score(S.data[dayIdx],k,toMinStr(BOARD.dep),S.crew);
+    return Object.assign(base,{verdict:s.verdict,constraint:s.constraint});
+  });
+  rows.sort((a,b)=>a.pending?(a.oneWay-b.oneWay):((rank[a.verdict]-rank[b.verdict])||(a.oneWay-b.oneWay)));
+  return rows;
+}
+function renderBoard(){
+  const colsEl=qs("#board-cols"); if(!colsEl) return;
+  if(BOARD.dayIdx==null) BOARD.dayIdx=defaultBoardDay();
+  const fmt=i=>dayDate(i).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+  const dsel=qs("#board-day");
+  dsel.innerHTML=[0,1,2,3,4].map(i=>'<option value="'+i+'"'+(i===BOARD.dayIdx?' selected':'')+'>'+fmt(i)+'</option>').join("");
+  const pair=weekendPair(BOARD.dayIdx);
+  colsEl.className="board-cols"+(pair.length===2?" two":"");
+  colsEl.innerHTML=pair.map(di=>'<div><div class="bcol-head">'+fmt(di)+'</div>'+boardRows(di).map(r=>
+    '<div class="brow'+(r.pending?' pending':'')+'" data-dest="'+r.destId+'" data-day="'+di+'" role="button" tabindex="0">'
+    +'<div class="brow-top"><span class="brow-name">'+r.name+'</span><span class="window '+(r.pending?'':r.verdict)+'">'+(r.pending?'scoring…':boardChip(r.verdict))+'</span></div>'
+    +'<div class="brow-why">'+(r.pending?'scoring from the live forecast…':r.constraint)+'</div>'
+    +'<div class="brow-meta"><span>'+r.oneWay+' nm one-way</span><span>'+fmtDur(r.tow)+' on water</span></div>'
+    +'</div>').join("")+'</div>').join("");
+}
+// Debug handle for date-dependent board logic (weekend pairing can only be
+// exercised live on certain weekdays; tests override BOARD.baseDate).
+window.HG.board={ BOARD, renderBoard, weekendPair, defaultBoardDay, dayDate };
 function applyBranding(){
   const B=BOAT, C=B.copy;
   document.title=B.name+" "+B.tagline;
@@ -718,6 +817,10 @@ function init(){
   qs(".menu-toggle").onclick=()=>{ const n=qs("nav.primary"); const open=n.style.display==="flex"; n.style.cssText=open?"":"display:flex;position:absolute;top:64px;right:24px;background:var(--navy);flex-direction:column;padding:16px;border-radius:8px"; };
   const sm=document.getElementById("soundmap");
   if(sm){ sm.addEventListener("toggle",()=>{ const f=sm.querySelector("iframe"); if(sm.open&&f&&!f.src) f.src=BOAT.links.windyEmbed; }); }
+  const bday=qs("#board-day"), bdep=qs("#board-dep");
+  if(bday) bday.onchange=e=>{ BOARD.dayIdx=+e.target.value; renderBoard(); };
+  if(bdep){ bdep.value=BOARD.dep; bdep.onchange=e=>{ BOARD.dep=e.target.value||"09:00"; renderBoard(); }; }
+  renderBoard();
   renderChips(); load();
 }
 // ---------- CONSOLIDATED ENHANCEMENTS (formerly separate patch scripts) ----------
