@@ -751,16 +751,6 @@ function init(){
     ".verdict.go .vd-n b{color:var(--good,#2f8f6b)} .verdict.caution .vd-n b{color:var(--warn,#d99a2b)} .verdict.hold .vd-n b{color:var(--bad,#d0563b)}"+
     ".verdict-detail .vd-drv{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#5f7180);margin:12px 0 0}";
   document.head.appendChild(style);
-  function allWired(){
-    var dest=document.getElementById('dest');
-    var qsDest=document.getElementById('qs-dest');
-    var qsDate=document.getElementById('qs-date');
-    var tripdate=document.getElementById('tripdate');
-    var chart=document.getElementById('encchart');
-    var daysWrap=document.querySelector('.days');
-    var qsOk = (!qsDest || qsDest.__hgW) && (!qsDate || qsDate.__hgW);
-    return !!(tripdate && chart && dest && dest.__hgW && daysWrap && daysWrap.__hgW && qsOk);
-  }
   function boot(){
     apply();
     var mo=new MutationObserver(function(){ if(window.__hgVD) return; window.__hgVD=1; setTimeout(function(){window.__hgVD=0; apply();},80); });
@@ -807,6 +797,8 @@ function init(){
       go.textContent="Update trip call ⟶";
       if(window.innerWidth<900) panel.scrollIntoView({behavior:"smooth",block:"start"});
     });
+    // Let the sync section wire the freshly created qs controls deterministically.
+    document.dispatchEvent(new CustomEvent("hg:qs-ready"));
     return true;
   }
   var style=document.createElement("style");
@@ -937,9 +929,12 @@ function init(){
     if(qsDest && !qsDest.__hgW){ qsDest.__hgW=1; qsDest.addEventListener('change', function(){ syncDest('qs'); }); }
     if(dest && !dest.__hgW){ dest.__hgW=1; dest.addEventListener('change', function(){ syncDest('dest'); }); }
     if(dest && !dest.__hgDestDayGuard){ dest.__hgDestDayGuard=1; dest.addEventListener('change', function(){
-      var td=document.getElementById('tripdate'); var desired=td?td.value:null;
-      if(desired==null||desired==='') return;
+      // Read the desired day AT restore time, not at change time: capturing it
+      // synchronously raced the mirror-from-days observer when several controls
+      // changed in the same tick, restoring a stale day ~700ms later.
       setTimeout(function(){
+        var td=document.getElementById('tripdate'); var desired=td?td.value:null;
+        if(desired==null||desired==='') return;
         var days=dayCards(); var i=days.findIndex(function(d){return d.classList.contains('sel');});
         var cur=i>=0?days[i].getAttribute('data-day'):null;
         if(cur!==desired){ var c=document.querySelector('.days .day[data-day="'+desired+'"]'); if(c) c.click(); }
@@ -954,18 +949,14 @@ function init(){
     }
   }
 
-  /* ---- Robust bootstrap: retry until controls exist; re-insert if wiped ---- */
+  /* ---- Deterministic bootstrap: no polling. ensure() is idempotent and runs
+     (1) now — wires #dest and registers the .days MutationObserver (both static),
+     (2) on every days render via that observer — adds the date control / chart
+         once cards exist and re-inserts them if wiped,
+     (3) when the query-state hero announces its controls via hg:qs-ready. ---- */
   function ensure(){ addDate(); addChart(); wireSync(); }
-  function boot(){
-    var tries=0;
-    var iv=setInterval(function(){
-      ensure(); tries++;
-      if(allWired() || tries>60) clearInterval(iv);
-    }, 250);
-    ensure();
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+  document.addEventListener('hg:qs-ready', function(){ ensure(); });
+  ensure();
 })();
 
 const dashPaint=(function(){
