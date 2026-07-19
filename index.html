@@ -1040,5 +1040,19 @@ init();
   if(document.readyState!=='loading')boot();else document.addEventListener('DOMContentLoaded',boot);
 })();
 </script>
+
+<script>
+/* Consistent recommendation labels: GOOD TO GO / WORKABLE — STAY SHARP / NOT TODAY */
+(function(){
+  var norm=function(s){return s.replace(/\s+/g," ").trim().toUpperCase().replace(/[\u00c9E]/g,"E");};
+  function plannerContainer(){var c=null;document.querySelectorAll("div").forEach(function(el){if(/UPDATED RECOMMENDATION/i.test(el.textContent||"")&&el.querySelector("*")&&!c)c=el;});return c;}
+  function tgt(raw,inP){var n=norm(raw);if(n.indexOf("WORKABLE")===0)return "WORKABLE \u2014 STAY SHARP";if(n.indexOf("NO WAY")===0)return "NOT TODAY";if(n==="HOLD THE RUN")return inP?"NOT TODAY":"WORKABLE \u2014 STAY SHARP";return null;}
+  function rewrite(root,inP){if(!root)return;var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);var ns=[];while(w.nextNode())ns.push(w.currentNode);ns.forEach(function(tn){var raw=tn.nodeValue;if(!raw)return;var m=raw.trim().match(/^(GOOD TO GO|HOLD THE RUN|WORKABLE\s*[\u2014-]\s*STAY SHARP|WORKABLE STAY SHARP|NO WAY,?\s*JOS[\u00c9E]?)/i);if(m){var t=tgt(m[1],inP);if(t&&raw.indexOf(t)===-1)tn.nodeValue=raw.replace(m[1],t);}});}
+  function run(){rewrite(document.querySelector("#tripcall"),false);rewrite(plannerContainer(),true);}
+  var obs=new MutationObserver(function(){run();});
+  function boot(){if(!document.body){setTimeout(boot,50);return;}obs.observe(document.body,{childList:true,subtree:true,characterData:true});run();}
+  boot();
+})();
+</script>
 </body>
 </html>
