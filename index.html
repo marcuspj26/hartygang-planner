@@ -219,7 +219,7 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
       <div><label for="board-dep">Departure</label><input id="board-dep" type="time" value="09:00"></div>
     </div>
     <div class="board-cols" id="board-cols"></div>
-    <details class="soundmap board-map" id="board-soundmap">
+    <details class="soundmap board-map" id="board-soundmap" open>
       <summary>Sound conditions map</summary>
       <div class="soundmap-body"><iframe title="Live wind and wave map" width="100%" height="420" frameborder="0" loading="lazy"></iframe></div>
     </details>
@@ -852,8 +852,14 @@ function init(){
   qs("#askform").onsubmit=e=>{ e.preventDefault(); const q=qs("#ask").value.trim(); if(q) renderAnswer(advise(q)); };
   qsa(".linkbtn[data-jump]").forEach(b=>b.onclick=()=>document.getElementById(b.dataset.jump).scrollIntoView({behavior:"smooth"}));
   qs(".menu-toggle").onclick=()=>{ const n=qs("nav.primary"); const open=n.style.display==="flex"; n.style.cssText=open?"":"display:flex;position:absolute;top:64px;right:24px;background:var(--navy);flex-direction:column;padding:16px;border-radius:8px"; };
-  // Both the trip-call and weekend-board maps lazy-load the same embed on expand.
-  qsa(".soundmap").forEach(sm=>{ sm.addEventListener("toggle",()=>{ const f=sm.querySelector("iframe"); if(sm.open&&f&&!f.src) f.src=BOAT.links.windyEmbed; }); });
+  // The board map opens by default; the trip-call map loads on expand. load()
+  // sets the src only while open, so calling it at init loads an open-by-default
+  // map immediately (its toggle event never fires) and no-ops for collapsed ones.
+  qsa(".soundmap").forEach(sm=>{
+    const load=()=>{ const f=sm.querySelector("iframe"); if(sm.open&&f&&!f.src) f.src=BOAT.links.windyEmbed; };
+    sm.addEventListener("toggle",load);
+    load();
+  });
   const bday=qs("#board-day"), bdep=qs("#board-dep");
   if(bday) bday.onchange=e=>{ BOARD.dayIdx=+e.target.value; renderBoard(); };
   if(bdep){ bdep.value=BOARD.dep; bdep.onchange=e=>{ BOARD.dep=e.target.value||"09:00"; renderBoard(); }; }
