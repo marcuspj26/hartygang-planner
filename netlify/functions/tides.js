@@ -10,9 +10,13 @@ exports.handler = async function (event) {
   const dd = String(now.getDate()).padStart(2, "0");
   const begin = `${yyyy}${mm}${dd}`;
 
+  // Station comes from the client (config/boat.json); 8447742 is the fallback.
+  const station = (event.queryStringParameters && event.queryStringParameters.station) || "8447742";
+
   const url =
     "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter" +
-    "?product=predictions&application=hartygang_planner&station=8447742&datum=MLLW&interval=hilo&units=english&time_zone=lst_ldt&format=json" +
+    "?product=predictions&application=hartygang_planner&station=" + encodeURIComponent(station) +
+    "&datum=MLLW&interval=hilo&units=english&time_zone=lst_ldt&format=json" +
     "&begin_date=" + begin + "&range=48";
 
   try {

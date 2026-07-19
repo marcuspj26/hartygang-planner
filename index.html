@@ -334,51 +334,23 @@ footer{background:var(--navy);color:#9fb2c0;padding:40px 0;border-top:1px solid 
   </div>
 </footer>
 </div>
-<script>
+<script type="module">
 
-const HOME = { lat:41.5867, lon:-70.4647, name:"New Seabury" };
-const TIDE_STATION = "8447742"; // Popponesset Island (subordinate; ref 8443970 Boston)
-const DEST = {
-  local:        {name:"Popponesset Bay Loop", nm:6,  exposure:0, course:"Bay", crossing:false,
-                 legs:[["Home dock","Popponesset departure"],["Popponesset Bay","Protected shallows"],["Home","Return before sea-breeze"]],
-                 note:"A protected in-bay loop. Little open-water exposure; wind chop over the shoals is the main factor."},
-  "sampsons-island":{name:"Sampson's Island", nm:13, exposure:1, course:"W / NW", crossing:false,
-                 legs:[["Home dock","Popponesset Bay departure"],["Succonnesset Point","Assess beam chop"],["Sampson's Island","Shoals, beach traffic & anchoring"]],
-                 note:"A close-to-home run toward Cotuit with frequent turn-back options. The exposed piece is the short Sound leg west of Popponesset."},
-  cotuit:       {name:"Cotuit Harbor", nm:15, exposure:1, course:"W", crossing:false,
-                 legs:[["Home dock","Popponesset departure"],["Sound leg","Short SW exposure"],["Cotuit Harbor","Mooring field & channel"]],
-                 note:"Short westward hop. Watch the entrance shoals and mind the channel on the way in."},
-  waquoit:      {name:"Waquoit Bay & Washburn Island", nm:16, exposure:1, course:"W / SW", crossing:false,
-                 legs:[["Home dock","Popponesset departure"],["Sound leg","Beam sea westbound"],["Waquoit","Bar & inner bay"]],
-                 note:"A westward run with a shallow entrance bar. Time the bar with tide."},
-  falmouth:     {name:"Falmouth Harbor", nm:24, exposure:2, course:"W / SW", crossing:true,
-                 legs:[["Home dock","Popponesset departure"],["Sound crossing","SW build on the nose home"],["Falmouth Harbor","Ferry & channel traffic"]],
-                 note:"Longer westbound Sound run. A building SW makes the return leg the hard part of the day."},
-  naushon:      {name:"Naushon Island & Hadley Harbor", nm:34, exposure:3, course:"W / SW", crossing:true,
-                 legs:[["Home dock","Popponesset departure"],["Sound crossing","Exposed SW fetch"],["Woods Hole area","Strong current"],["Hadley Harbor","Protected anchorage"]],
-                 note:"Long, exposed run past Woods Hole with serious current. Plan the crossing around wind and current together."},
-  "oak-bluffs": {name:"Oak Bluffs", nm:26, exposure:3, course:"S / SW", crossing:true,
-                 legs:[["Home dock","Popponesset departure"],["Sound crossing","Monitor southwest build"],["East Chop","Traffic & ferry awareness"]],
-                 note:"Open-water exposure across Nantucket Sound. A short-period SW wind sea can make the ride home the toughest leg."},
-  "vineyard-haven":{name:"Vineyard Haven", nm:27, exposure:3, course:"S / SW", crossing:true,
-                 legs:[["Home dock","Popponesset departure"],["Sound crossing","SW fetch across the Sound"],["Vineyard Haven","Busy harbor, ferry lanes"]],
-                 note:"Full Sound crossing into a busy ferry harbor. The exposed return leg governs the day."},
-  edgartown:    {name:"Edgartown Harbor", nm:30, exposure:3, course:"S / SE", crossing:true,
-                 legs:[["Home dock","Popponesset departure"],["Sound crossing","Long SW fetch"],["Cape Poge","Watch the rips"],["Edgartown","Strong harbor current"]],
-                 note:"Longest island run with rips near Cape Poge and strong harbor current. Weather and current both matter."},
-  hyannis:      {name:"Hyannis Harbor", nm:18, exposure:2, course:"E", crossing:true,
-                 legs:[["Home dock","Popponesset departure"],["Sound leg","Eastbound, quartering sea"],["Hyannis","Ferry & channel traffic"]],
-                 note:"Eastbound Sound run into heavy ferry traffic. Quartering seas can be uncomfortable in a fresh SW."},
-  nantucket:    {name:"Nantucket Harbor", nm:44, exposure:3, course:"SE", crossing:true,
-                 legs:[["Home dock","Popponesset departure"],["Sound crossing","Long exposed SE run"],["Shoals","Time the shoals & tide"],["Nantucket","Harbor entrance"]],
-                 note:"The longest, most exposed run &mdash; a real open-water passage. Only a genuinely settled day makes this comfortable."},
-  custom:       {name:"Other destination", nm:20, exposure:2, course:"varies", crossing:true,
-                 legs:[["Home dock","Popponesset departure"],["Open water","Assess your own route"],["Destination","Confirm on the chart"]],
-                 note:"Custom destination. Exposure assumed moderate &mdash; verify your own route, distance, and shelter."}
-};
-const ORDER = ["local","sampsons-island","cotuit","waquoit","falmouth","naushon","oak-bluffs","vineyard-haven","edgartown","hyannis","nantucket","custom"];
-const S = { data:null, live:false, dayIdx:0, dest:"oak-bluffs", crew:"regular", dep:"08:00", updated:null, tide:null, tideLive:false };
-const CREW = { family:{label:"Comfort first", tol:0.75}, regular:{label:"Regular crew", tol:1.0}, sport:{label:"Experienced / sport", tol:1.35} };
+async function loadJSON(url){ const r=await fetch(url); if(!r.ok) throw new Error(url+" -> HTTP "+r.status); return r.json(); }
+const [BOAT, DEST_LIST] = await Promise.all([
+  loadJSON("./config/boat.json"),
+  loadJSON("./config/destinations.json")
+]);
+
+const HOME = { lat:BOAT.home.lat, lon:BOAT.home.lon, name:BOAT.home.name };
+const TIDE_STATION = BOAT.tide.stationId;
+const DEST = {}, ORDER = [];
+for(const d of DEST_LIST){ ORDER.push(d.id); DEST[d.id]=d; }
+// Expose config to the enhancement scripts further down the page.
+window.HG = { BOAT, DEST, ORDER };
+
+const S = { data:null, live:false, dayIdx:0, dest:BOAT.defaults.dest, crew:BOAT.crew.default, dep:BOAT.defaults.departure, updated:null, tide:null, tideLive:false };
+const CREW = BOAT.crew.profiles;
 
 function fallback(){
   const days=["Today","Tomorrow","Mon","Tue","Wed"];
@@ -425,15 +397,15 @@ function skyLabel(fj,date){ let s=0,n=0; for(let i=0;i<fj.hourly.time.length;i++
 function dirName(deg){ const d=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]; return d[Math.round(deg/22.5)%16]; }
 function fmtTime(min){ let h=Math.floor(min/60),m=Math.round(min%60); const ap=h>=12?"PM":"AM"; h=h%12||12; return h+":"+String(m).padStart(2,"0")+" "+ap; }
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-function travelMin(nm){ return Math.round((nm/2)/22*60); }
+function travelMin(nm){ return Math.round((nm/2)/BOAT.performance.cruiseSpeedKts*60); }
 function toMinStr(s){ return (+s.split(":")[0])*60+(+s.split(":")[1]); }
 function hourAt(day,min){ const h=Math.round(min/60); return day.hours.find(x=>x.hour===h)||day.hours.reduce((a,b)=>Math.abs(b.hour-min/60)<Math.abs(a.hour-min/60)?b:a); }
 
 // ---------- TIDE MODULE (sequenced: estimate now, live NOAA upgrade) ----------
 // Estimate: semidiurnal M2 model anchored to a known Popponesset high water, ~12h25m period.
 // This is an approximation for instant display; replaced by NOAA data when it arrives.
-const TIDE_PERIOD_MIN = 745; // ~12h25m (two highs/day)
-const M2_EPOCH = Date.UTC(2025,0,1,4,30); // reference high water (UTC) near the station; approximate
+const TIDE_PERIOD_MIN = BOAT.tide.m2PeriodMin; // ~12h25m (two highs/day)
+const M2_EPOCH = Date.parse(BOAT.tide.m2RefHighWaterUtc); // reference high water (UTC) near the station; approximate
 function estimateTides(now){
   const events=[]; const start=new Date(now); start.setHours(0,0,0,0);
   // find high-water times across today by stepping the M2 phase
@@ -490,14 +462,14 @@ function tideStateAt(when){
 
 // ---------- SCORING ENGINE ----------
 function score(day,destKey,depMin,crewKey){
-  const dst=DEST[destKey],crew=CREW[crewKey],dur=travelMin(dst.nm);
+  const dst=DEST[destKey],crew=CREW[crewKey],dur=travelMin(dst.nmRoundTrip),C=BOAT.comfort;
   const out=hourAt(day,depMin),back=hourAt(day,Math.min(depMin+dur*2+120,19*60));
   const expF=1+dst.exposure*0.28,tol=crew.tol;
-  const waveP=clamp((Math.max(out.wh,back.wh)/(2.8*tol))*expF,0,1.15);
+  const waveP=clamp((Math.max(out.wh,back.wh)/(C.waveFt*tol))*expF,0,1.15);
   const steep=Math.max(out.wh/Math.max(out.wp,1),back.wh/Math.max(back.wp,1));
-  const periodP=clamp((steep/0.55)*expF-0.15,0,1.1);
-  const gustP=clamp((Math.max(out.g,back.g)/(26*tol))*(dst.crossing?1.1:0.85),0,1.15);
-  const windP=clamp(Math.max(out.w,back.w)/(18*tol),0,1);
+  const periodP=clamp((steep/C.steepnessRatio)*expF-0.15,0,1.1);
+  const gustP=clamp((Math.max(out.g,back.g)/(C.gustKts*tol))*(dst.crossing?1.1:0.85),0,1.15);
+  const windP=clamp(Math.max(out.w,back.w)/(C.windKts*tol),0,1);
   const rainP=clamp(Math.max(out.pp,back.pp)/100,0,1);
   const parts=[{k:"Wave height",pct:waveP,weight:26},{k:"Period / steepness",pct:periodP,weight:22},{k:"Gusts",pct:gustP,weight:22},{k:"Sustained wind",pct:windP,weight:14},{k:"Rain risk",pct:rainP,weight:8},{k:"Route exposure",pct:clamp(dst.exposure/3,0,1),weight:8}];
   let pen=0,ws=0; parts.forEach(p=>{pen+=Math.min(p.pct,1)*p.weight;ws+=p.weight;});
@@ -511,7 +483,7 @@ function verdictText(v){ return v==="go"?"GOOD TO GO":v==="caution"?"WORKABLE \u
 function verdictColor(v){ return v==="go"?"var(--good)":v==="caution"?"var(--warn)":"var(--bad)"; }
 
 // ---------- ADVISOR ----------
-function detectDest(q){ q=q.toLowerCase(); const map={"sampson":"sampsons-island","cotuit":"cotuit","waquoit":"waquoit","washburn":"waquoit","falmouth":"falmouth","naushon":"naushon","hadley":"naushon","oak bluff":"oak-bluffs","vineyard haven":"vineyard-haven","edgartown":"edgartown","hyannis":"hyannis","nantucket":"nantucket","popponesset":"local","bay loop":"local"}; for(const k in map){ if(q.includes(k)) return map[k]; } return null; }
+function detectDest(q){ q=q.toLowerCase(); for(const id of ORDER){ for(const a of (DEST[id].aliases||[])){ if(q.includes(a)) return id; } } return null; }
 function detectDay(q){ q=q.toLowerCase(); if(q.includes("tomorrow")) return 1; for(let i=0;i<S.data.length;i++){ if(q.includes(S.data[i].label.toLowerCase())) return i; } if(q.includes("today")) return 0; return null; }
 function detectTime(q){ q=q.toLowerCase(); if(q.includes("after lunch")||q.includes("afternoon")) return 14*60; if(q.includes("morning")||q.includes("early")) return 8*60; if(q.includes("midday")||q.includes("noon")) return 12*60; if(q.includes("evening")||q.includes("sunset")) return 17*60; const m=q.match(/(\d{1,2})\s*(am|pm)/); if(m){ let h=+m[1]%12; if(m[2]==="pm") h+=12; return h*60; } return null; }
 function tideNote(dayIdx,depMin){
@@ -520,10 +492,10 @@ function tideNote(dayIdx,depMin){
   const when=new Date(base.getTime()+depMin*60000);
   const st=tideStateAt(when);
   const src = S.tideLive ? "NOAA-confirmed" : "estimated";
-  if(!st) return "Tide timing at the Popponesset entrance ("+src+") is unavailable for that time; check the NOAA station before you go.";
+  if(!st) return "Tide timing at the "+BOAT.home.entranceName+" ("+src+") is unavailable for that time; check the NOAA station before you go.";
   const dir = st.rising ? "flooding (rising)" : "ebbing (falling)";
   const nxt = st.next.type==="H"?"next high":"next low";
-  return "At the Popponesset entrance the tide is "+dir+" around then ("+src+"; "+nxt+" ~"+fmtTime(st.next.t.getHours()*60+st.next.t.getMinutes())+"). An ebb against a SW wind stacks up steeper chop over the bar, so time the bar carefully.";
+  return "At the "+BOAT.home.entranceName+" the tide is "+dir+" around then ("+src+"; "+nxt+" ~"+fmtTime(st.next.t.getHours()*60+st.next.t.getMinutes())+"). An ebb against a SW wind stacks up steeper chop over the bar, so time the bar carefully.";
 }
 function advise(q){
   const askedDest=detectDest(q),askedDay=detectDay(q),askedTime=detectTime(q);
@@ -537,7 +509,7 @@ function advise(q){
   const tideQ=/tide|current|bar\b|ebb|flood/.test(ql);
   const out=[],tags=[];
   if(whichDayQ){
-    const ranked=S.data.map((d,i)=>({i,label:d.label,best:bestHour(d,destKey,crewKey)})).sort((a,b)=>b.best.s.score-a.best.s.score);
+    const ranked=S.data.map((d,i)=>({i,label:d.label,best:window.bestHour(d,destKey,crewKey)})).sort((a,b)=>b.best.s.score-a.best.s.score);
     const top=ranked[0];
     out.push(["BEST DAY","For "+dstName+", "+top.label+" scores best ("+top.best.s.score+"/100), with the cleanest window around "+fmtTime(top.best.h*60)+"."]);
     out.push(["THE REST","Next best: "+ranked.slice(1,3).map(r=>r.label+" ("+r.best.s.score+")").join(", ")+". Lower-scoring days are driven mainly by "+ranked[ranked.length-1].best.s.worst.k.toLowerCase()+"."]);
@@ -551,20 +523,21 @@ function advise(q){
   out.push(["CONDITIONS AT "+fmtTime(depMin),"Modeled seas about "+o.wh.toFixed(1)+" ft at "+Math.round(o.wp)+" s from the "+dirName(o.wd)+", wind "+Math.round(o.w)+" kt gusting "+Math.round(o.g)+" kt"+(o.pp>20?", rain chance "+o.pp+"%":"")+"."+(o.wp<5?" That short period means steep, closely-spaced chop \u2014 it will feel rougher than the height alone suggests.":"")]);
   if(roughQ||askedTime!=null){ const wh=day.hours.reduce((a,b)=>b.wh>a.wh?b:a); out.push(["HOW IT BUILDS","Seas build through the day to about "+wh.wh.toFixed(1)+" ft by "+fmtTime(wh.hour*60)+" as the sea-breeze fills in. "+(depMin>=13*60?"An after-lunch departure lands you in the roughest part of the day.":"Going earlier keeps you ahead of the worst of it.")]); }
   if(tideQ||rideHomeQ||askedTime!=null){ out.push(["TIDE AT THE BAR",tideNote(dayIdx,depMin)]); }
-  if(rideHomeQ||DEST[destKey].crossing){ const b=s.back; out.push(["THE RIDE HOME","Modeled return around "+fmtTime(Math.min(depMin+s.dur*2+120,19*60))+": ~"+b.wh.toFixed(1)+" ft, gusts to "+Math.round(b.g)+" kt. "+(DEST[destKey].crossing?"The exposed Sound leg west of Popponesset is the hard part \u2014 a building SW puts it on the nose. Keep turn-back options open.":"Sheltered enough that the return should stay manageable.")]); }
+  if(rideHomeQ||DEST[destKey].crossing){ const b=s.back; out.push(["THE RIDE HOME","Modeled return around "+fmtTime(Math.min(depMin+s.dur*2+120,19*60))+": ~"+b.wh.toFixed(1)+" ft, gusts to "+Math.round(b.g)+" kt. "+(DEST[destKey].crossing?"The exposed Sound leg west of "+BOAT.home.shortName+" is the hard part \u2014 a building SW puts it on the nose. Keep turn-back options open.":"Sheltered enough that the return should stay manageable.")]); }
   if(kidsQ){ out.push(["WITH KIDS ABOARD","Judged on a comfort-first profile. "+(s.verdict==="go"?"Should be a comfortable ride for the crew.":s.verdict==="hold"?"Likely uncomfortable for young or sea-prone crew \u2014 I'd wait or pick the bay loop.":"Doable but plan for a bouncy stretch; brief everyone and keep it short.")]); }
-  out.push(["BEFORE LEAVING","Recheck NOAA ANZ232, radar, and actual Popponesset entrance conditions. Sunset is "+fmtTime(day.sunset)+" \u2014 last comfortable return roughly "+fmtTime(day.sunset-60)+". Planning guidance only, not a substitute for the skipper's judgment."]);
+  out.push(["BEFORE LEAVING","Recheck NOAA "+BOAT.marineZone+", radar, and actual "+BOAT.home.entranceName+" conditions. Sunset is "+fmtTime(day.sunset)+" \u2014 last comfortable return roughly "+fmtTime(day.sunset-60)+". Planning guidance only, not a substitute for the skipper's judgment."]);
   tags.push(day.label,dstName,CREW[crewKey].label,fmtTime(depMin));
   return {out,tags};
 }
 
 const qs=s=>document.querySelector(s), qsa=s=>document.querySelectorAll(s);
-function render(){ renderDays(); renderTripCall(); renderLive(); renderBars(); renderPlanner(); renderTide(); }
+// Calls go through window.* so the enhancement scripts below can patch these functions.
+function render(){ renderDays(); window.renderTripCall(); renderLive(); renderBars(); window.renderPlanner(); renderTide(); }
 function renderLive(){
   const day=S.data[0], h=hourAt(day,new Date().getHours()*60)||day.hours[Math.floor(day.hours.length/2)];
   qs("#metrics").innerHTML=[["Wind",Math.round(h.w),"kt "+dirName(h.wdir)],["Gusts",Math.round(h.g),"knots"],["Waves",h.wh.toFixed(1),"feet"],["Period",Math.round(h.wp),"seconds"]].map(m=>'<div class="metric"><div class="k">'+m[0]+'</div><div class="v">'+m[1]+'<small>'+m[2]+'</small></div></div>').join("");
   qs("#live-updated").textContent="Updated "+(S.updated?S.updated.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}):"\u2014");
-  qs("#live-status").innerHTML=S.live?'<span class="badge live">Live</span> Open-Meteo marine + weather models for the home dock, refreshed on load.':'<span class="badge fallback">Sample data</span> Live models unreachable right now &mdash; showing built-in sample values. Check the linked ANZ232 forecast before departure.';
+  qs("#live-status").innerHTML=S.live?'<span class="badge live">Live</span> Open-Meteo marine + weather models for the home dock, refreshed on load.':'<span class="badge fallback">Sample data</span> Live models unreachable right now &mdash; showing built-in sample values. Check the linked '+BOAT.marineZone+' forecast before departure.';
   qs("#adv-badge").className="badge "+(S.live?"live":"fallback"); qs("#adv-badge").textContent=S.live?"Live forecast":"Sample data";
 }
 function renderTide(){
@@ -579,13 +552,13 @@ function renderTide(){
     + (S.tideLive?'':' <span class="muted" style="font-size:11px">(estimate \u2014 upgrades to NOAA when available)</span>');
 }
 function renderDays(){
-  qs("#days").innerHTML=S.data.map((d,i)=>{ const b=bestHour(d,S.dest,S.crew);
+  qs("#days").innerHTML=S.data.map((d,i)=>{ const b=window.bestHour(d,S.dest,S.crew);
     return '<div class="day'+(i===S.dayIdx?' sel':'')+'" role="listitem" tabindex="0" data-day="'+i+'"><div class="d">'+d.label+'</div><div class="sky">'+d.sky+'</div><div class="stat"><span>waves</span><b>'+d.whMax.toFixed(1)+' ft</b></div><div class="stat"><span>gusts</span><b>'+Math.round(d.gMax)+' kt</b></div><div class="window '+b.s.verdict+'">'+(b.s.verdict==="go"?"Best bet":b.s.verdict==="caution"?"Workable":"Poor window")+'</div></div>'; }).join("");
   qsa("#days .day").forEach(el=>{ const go=()=>{S.dayIdx=+el.dataset.day;render();}; el.onclick=go; el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();go();} }; });
   qs("#build-day").textContent=S.data[S.dayIdx].label;
 }
 function renderTripCall(){
-  const day=S.data[S.dayIdx], s=score(day,S.dest,toMinStr(S.dep),S.crew), b=bestHour(day,S.dest,S.crew);
+  const day=S.data[S.dayIdx], s=score(day,S.dest,toMinStr(S.dep),S.crew), b=window.bestHour(day,S.dest,S.crew);
   const icon=s.verdict==="go"?"\u2713":s.verdict==="caution"?"!":"\u2715";
   qs("#tc-body").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:16px">'+day.label+' &middot; '+DEST[S.dest].name+'</div><div class="verdict '+s.verdict+'"><div class="dot">'+icon+'</div><div><div class="label">Score '+s.score+'/100</div><h2>'+verdictText(s.verdict)+'</h2></div></div><p class="muted">'+(s.verdict==="hold"?"Limiting factor: "+s.worst.k.toLowerCase()+". Choose the protected bay loop or move to a better-scoring day.":s.verdict==="caution"?"Workable with care. Watch the "+s.worst.k.toLowerCase()+" and keep the run short.":"Conditions support the plan. Still confirm before you leave.")+'</p><div class="mini"><div><div class="k">Best window</div><div class="v">'+fmtTime(b.h*60)+'</div></div><div><div class="k">Modeled sea</div><div class="v">'+(s.out.wp<5?"Steep, close chop":"Moderate swell")+'</div></div></div>';
 }
@@ -595,32 +568,64 @@ function renderBars(){
 }
 function mapSVG(destKey,s){
   const dst=DEST[destKey];
-  const dpts={local:[250,300],"sampsons-island":[150,250],cotuit:[130,235],waquoit:[95,270],falmouth:[70,300],naushon:[60,360],"oak-bluffs":[220,430],"vineyard-haven":[180,440],edgartown:[300,450],hyannis:[360,250],nantucket:[430,470],custom:[300,380]};
-  const dest=dpts[destKey]||[250,380], col=verdictColor(s.verdict);
+  const dest=dst.mapXY||[250,380], col=verdictColor(s.verdict);
   let g=""; for(let i=0;i<10;i++){ g+='<line x1="'+(i*50)+'" y1="0" x2="'+(i*50)+'" y2="520" stroke="rgba(255,255,255,.05)"/><line x1="0" y1="'+(i*52)+'" x2="500" y2="'+(i*52)+'" stroke="rgba(255,255,255,.05)"/>'; }
-  return '<svg class="map" viewBox="0 0 500 520" role="img" aria-label="Planning map for '+dst.name+'"><rect width="500" height="520" fill="#0f2233"/>'+g+'<text x="250" y="200" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="3" text-anchor="middle">NANTUCKET SOUND</text><path d="M0,0 L500,0 L500,120 Q300,150 120,150 Q40,155 0,190 Z" fill="#16324a"/><text x="150" y="300" fill="rgba(255,255,255,.25)" font-size="10">POPPONESSET BAY</text><path d="M120,470 Q280,430 360,470 L360,520 L120,520 Z" fill="#16324a"/><text x="240" y="500" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="2" text-anchor="middle">MARTHA\u2019S VINEYARD</text><line x1="250" y1="300" x2="'+dest[0]+'" y2="'+dest[1]+'" stroke="'+col+'" stroke-width="2.5" stroke-dasharray="7 5"/><circle cx="250" cy="300" r="8" fill="#e8694a"/><text x="262" y="304" fill="#fff" font-size="11">Home dock</text><circle cx="'+dest[0]+'" cy="'+dest[1]+'" r="7" fill="'+col+'"/><text x="'+(dest[0]+12)+'" y="'+(dest[1]+4)+'" fill="#fff" font-size="11">'+dst.name+'</text><text x="30" y="42" fill="#f0a58f" font-size="20" font-family="serif">'+dirName(s.out.wdir)+'</text><text x="30" y="60" fill="#9fb2c0" font-size="11">'+Math.round(s.out.w)+'\u2013'+Math.round(s.out.g)+' kt</text></svg>';
+  return '<svg class="map" viewBox="0 0 500 520" role="img" aria-label="Planning map for '+dst.name+'"><rect width="500" height="520" fill="#0f2233"/>'+g+'<text x="250" y="200" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="3" text-anchor="middle">'+BOAT.home.waterBody.toUpperCase()+'</text><path d="M0,0 L500,0 L500,120 Q300,150 120,150 Q40,155 0,190 Z" fill="#16324a"/><text x="150" y="300" fill="rgba(255,255,255,.25)" font-size="10">'+BOAT.home.bayName.toUpperCase()+'</text><path d="M120,470 Q280,430 360,470 L360,520 L120,520 Z" fill="#16324a"/><text x="240" y="500" fill="rgba(255,255,255,.35)" font-size="11" letter-spacing="2" text-anchor="middle">'+BOAT.home.southLandmassLabel.toUpperCase()+'</text><line x1="250" y1="300" x2="'+dest[0]+'" y2="'+dest[1]+'" stroke="'+col+'" stroke-width="2.5" stroke-dasharray="7 5"/><circle cx="250" cy="300" r="8" fill="#e8694a"/><text x="262" y="304" fill="#fff" font-size="11">Home dock</text><circle cx="'+dest[0]+'" cy="'+dest[1]+'" r="7" fill="'+col+'"/><text x="'+(dest[0]+12)+'" y="'+(dest[1]+4)+'" fill="#fff" font-size="11">'+dst.name+'</text><text x="30" y="42" fill="#f0a58f" font-size="20" font-family="serif">'+dirName(s.out.wdir)+'</text><text x="30" y="60" fill="#9fb2c0" font-size="11">'+Math.round(s.out.w)+'\u2013'+Math.round(s.out.g)+' kt</text></svg>';
 }
 function renderPlanner(){
   const dst=DEST[S.dest], day=S.data[S.dayIdx], s=score(day,S.dest,toMinStr(S.dep),S.crew);
   qs("#reco-v").innerHTML='<span class="pin" style="background:'+verdictColor(s.verdict)+'"></span><span>'+verdictText(s.verdict)+' &middot; depart '+fmtTime(toMinStr(S.dep))+'</span>';
   qs("#score").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Why this score</div>'+s.parts.map(p=>{ const pct=Math.round(Math.min(p.pct,1)*100), col=pct<40?"var(--good)":pct<70?"var(--warn)":"var(--bad)"; return '<div class="barrow"><span>'+p.k+'</span><span class="track"><span class="fill" style="width:'+pct+'%;background:'+col+'"></span></span><span style="text-align:right;color:var(--muted)">'+pct+'</span></div>'; }).join("");
   qs("#mapwrap").innerHTML=mapSVG(S.dest,s);
-  const dur=travelMin(dst.nm);
-  qs("#brief").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Suggested route brief</div><div class="bh"><h3>'+dst.name+'</h3><span class="nm">'+dst.nm+'<small>nm round trip</small></span></div><p class="muted" style="margin-top:10px">'+dst.note+'</p><div class="stats"><div><div class="k">Underway</div><div class="v">'+Math.floor(dur*2/60)+' hr '+(dur*2%60)+' min</div></div><div><div class="k">General course</div><div class="v">'+dst.course+'</div></div><div><div class="k">Planning fuel</div><div class="v">'+Math.round(dst.nm*0.7)+'\u2013'+Math.round(dst.nm*0.95)+' gal</div></div></div><ul class="legs">'+dst.legs.map((l,i)=>'<li><span class="n">'+(i+1)+'</span><span><b>'+l[0]+'</b><br><span>'+l[1]+'</span></span></li>').join("")+'</ul><p class="disc">Planning concept only &mdash; not a navigational route. Confirm with current charts, local notices, channel conditions, and the chartplotter before leaving the dock.</p>';
+  const dur=travelMin(dst.nmRoundTrip);
+  qs("#brief").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Suggested route brief</div><div class="bh"><h3>'+dst.name+'</h3><span class="nm">'+dst.nmRoundTrip+'<small>nm round trip</small></span></div><p class="muted" style="margin-top:10px">'+dst.note+'</p><div class="stats"><div><div class="k">Underway</div><div class="v">'+Math.floor(dur*2/60)+' hr '+(dur*2%60)+' min</div></div><div><div class="k">General course</div><div class="v">'+dst.course+'</div></div><div><div class="k">Planning fuel</div><div class="v">'+Math.round(dst.nmRoundTrip*BOAT.performance.fuelGalPerNmLow)+'\u2013'+Math.round(dst.nmRoundTrip*BOAT.performance.fuelGalPerNmHigh)+' gal</div></div></div><ul class="legs">'+dst.legs.map((l,i)=>'<li><span class="n">'+(i+1)+'</span><span><b>'+l[0]+'</b><br><span>'+l[1]+'</span></span></li>').join("")+'</ul><p class="disc">Planning concept only &mdash; not a navigational route. Confirm with current charts, local notices, channel conditions, and the chartplotter before leaving the dock.</p>';
 }
 function renderAnswer(res){ qs("#answer").innerHTML='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Advisor answer</div>'+res.out.map(b=>'<h4>'+b[0]+'</h4><p>'+b[1]+'</p>').join("")+'<div class="tags">'+res.tags.map(t=>'<span class="tag">'+t+'</span>').join("")+'</div>'; }
-const CHIPS=["How about Sampson's Island today?","Can we make Naushon tomorrow?","Will Falmouth be rough after lunch?","Which day is best for Oak Bluffs?"];
+const CHIPS=BOAT.advisorChips;
 function renderChips(){ qs("#chips").innerHTML=CHIPS.map(c=>'<button class="chip">'+c+' <span style="color:var(--coral)">\u2197</span></button>').join(""); qsa("#chips .chip").forEach(b=>b.onclick=()=>{ const q=b.textContent.replace("\u2197","").trim(); qs("#ask").value=q; renderAnswer(advise(q)); }); }
+function applyBranding(){
+  const B=BOAT, C=B.copy;
+  document.title=B.name+" "+B.tagline;
+  const brandB=qs(".brand b"), brandS=qs(".brand span");
+  if(brandB) brandB.textContent=B.name.toUpperCase();
+  if(brandS) brandS.textContent=B.tagline;
+  const lunch=document.querySelector('nav.primary a[target="_blank"]'); if(lunch) lunch.href=B.links.lunchMenu;
+  const eb=document.querySelector(".hero .eyebrow"); if(eb) eb.textContent=C.heroEyebrow;
+  const h1=document.querySelector(".hero h1"); if(h1) h1.textContent=C.heroTitle;
+  const lede=document.querySelector(".hero p.lede"); if(lede) lede.textContent=C.heroLede;
+  const lh=document.querySelector(".live-head span");
+  if(lh) lh.innerHTML=B.home.waterBody+" &middot; "+B.marineZone+" &middot; Home dock "+B.home.lat+"&deg; N, "+Math.abs(B.home.lon)+"&deg; W";
+  const tl=document.querySelector("#tide .lab"); if(tl) tl.textContent=B.tide.label;
+  const ask=qs("#ask"); if(ask) ask.placeholder=C.askPlaceholder;
+  const bs=document.querySelector("#hartygang .sec-head h2"); if(bs) bs.textContent=C.boatSectionTitle;
+  const bp=document.querySelector("#hartygang .boat-split-text p"); if(bp) bp.textContent=C.boatSectionBody;
+  const img=document.querySelector("#boatphoto img"); if(img){ img.src=B.vessel.photo; img.alt=B.vessel.photoAlt; }
+  const fc=document.querySelector("#boatphoto figcaption"); if(fc) fc.textContent=B.vessel.photoCaption;
+  const sg=document.querySelector(".safety-grid");
+  if(sg&&B.safetyCards) sg.innerHTML=B.safetyCards.map(c=>'<div class="safety-card" style="border:1px solid rgba(0,0,0,0.12);border-radius:14px;padding:18px 20px;"><h3 style="margin:0 0 6px;font-size:1.05rem;">'+c.title+'</h3><p style="margin:0;">'+c.body+'</p></div>').join("");
+  const srcs=document.querySelectorAll("#sources .src");
+  if(srcs[0]){ srcs[0].href=B.links.marineZoneForecast; srcs[0].querySelector(".t").textContent=B.home.waterBody+" marine zone "+B.marineZone; }
+  if(srcs[1]){ srcs[1].href=B.links.tideStation; srcs[1].querySelector(".t").textContent=B.tide.stationName+" station "+B.tide.stationId; }
+  const footB=document.querySelector(".foot b"); if(footB) footB.textContent=B.name.toUpperCase();
+  const footS=document.querySelector(".foot b + span, .foot span"); if(footS) footS.textContent=B.home.name+" · "+B.home.town.split(",")[0];
+  const footDivs=document.querySelectorAll(".foot > div"); if(footDivs[1]) footDivs[1].textContent=C.footerTag;
+}
 function init(){
+  applyBranding();
   const sel=qs("#dest"); sel.innerHTML=ORDER.map(k=>'<option value="'+k+'">'+DEST[k].name+'</option>').join(""); sel.value=S.dest;
   sel.onchange=()=>{S.dest=sel.value;render();};
-  qs("#crew").onchange=e=>{S.crew=e.target.value;render();};
+  const crewSel=qs("#crew");
+  crewSel.innerHTML=Object.keys(CREW).map(k=>'<option value="'+k+'"'+(k===S.crew?' selected':'')+'>'+CREW[k].label+'</option>').join("");
+  crewSel.onchange=e=>{S.crew=e.target.value;render();};
+  qs("#dep").value=S.dep;
   qs("#dep").onchange=e=>{S.dep=e.target.value;render();};
   qs("#askform").onsubmit=e=>{ e.preventDefault(); const q=qs("#ask").value.trim(); if(q) renderAnswer(advise(q)); };
   qsa(".linkbtn[data-jump]").forEach(b=>b.onclick=()=>document.getElementById(b.dataset.jump).scrollIntoView({behavior:"smooth"}));
   qs(".menu-toggle").onclick=()=>{ const n=qs("nav.primary"); const open=n.style.display==="flex"; n.style.cssText=open?"":"display:flex;position:absolute;top:64px;right:24px;background:var(--navy);flex-direction:column;padding:16px;border-radius:8px"; };
   renderChips(); load();
 }
+// Expose the engine's patch points for the enhancement scripts below.
+window.score=score; window.bestHour=bestHour; window.renderTripCall=renderTripCall; window.renderPlanner=renderPlanner;
 init();
 
 </script>
@@ -645,10 +650,11 @@ init();
   function windBand(kt){ if(!(kt>=0)) return 0; if(kt<10) return 0; if(kt<20) return 1; return 2; }
   function waveBand(ft){ if(!(ft>=0)) return 0; if(ft<2) return 0; if(ft<4) return 1; return 2; }
   var BANDS=[
-    {key:"go",name:"ALL SYSTEMS GO",icon:"✓",tag:"Green",rec:"Conditions are calm and well within this center console’s comfort zone — good to run."},
-    {key:"caution",name:"A BIT SPICY, BUT DOABLE",icon:"⚠",tag:"Yellow",rec:"Manageable but sporty — expect chop and spray. Trim down, slow in the sets, and brief the crew before you go."},
-    {key:"hold",name:"NO WAY, JOSÉ",icon:"✕",tag:"Red",rec:"Genuinely dangerous for a 23-ft center console. Stay on the mooring — this one is a hard no."}
+    {key:"go",name:"ALL SYSTEMS GO",icon:"✓",tag:"Green"},
+    {key:"caution",name:"A BIT SPICY, BUT DOABLE",icon:"⚠",tag:"Yellow"},
+    {key:"hold",name:"NO WAY, JOSÉ",icon:"✕",tag:"Red"}
   ];
+  function bandRec(key){ var c=window.HG&&window.HG.BOAT&&window.HG.BOAT.verdictCopy; return (c&&c[key])||""; }
   function compute(m){
     var wB=windBand(m.wind), waB=waveBand(m.wave), gB=windBand(m.gust);
     var base=Math.max(wB,waB);
@@ -669,7 +675,7 @@ init();
     if(txt){ txt.innerHTML="<div class=\"label\">"+B.tag+" — skipper call</div><h2>"+B.name+"</h2>"; }
     var host=vEl.parentNode, prev=host.querySelector(".verdict-detail"); if(prev) prev.remove();
     var d=document.createElement("div"); d.className="verdict-detail";
-    d.innerHTML="<p class=\"vd-rec\">"+B.rec+"</p>"+
+    d.innerHTML="<p class=\"vd-rec\">"+bandRec(B.key)+"</p>"+
       "<div class=\"vd-nums\">"+
         "<span class=\"vd-n\"><b>"+fmt(m.wind)+"</b><i>kt wind</i></span>"+
         "<span class=\"vd-n\"><b>"+fmt(m.gust)+"</b><i>kt gust</i></span>"+
@@ -806,18 +812,12 @@ init();
     if(document.getElementById('encchart')) return true;
     var mapwrap=document.querySelector('.mapwrap'); if(!mapwrap) return false;
     var base='https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/MapServer/export';
-    var HOME={lat:41.5867,lon:-70.4647};
-    var DEST={
-      'local':{lat:41.585,lon:-70.462},'sampsons-island':{lat:41.577,lon:-70.437},
-      'cotuit':{lat:41.615,lon:-70.437},'waquoit':{lat:41.567,lon:-70.535},
-      'falmouth':{lat:41.543,lon:-70.610},'naushon':{lat:41.518,lon:-70.680},
-      'oak-bluffs':{lat:41.457,lon:-70.558},'vineyard-haven':{lat:41.454,lon:-70.604},
-      'edgartown':{lat:41.389,lon:-70.513},'hyannis':{lat:41.638,lon:-70.278},
-      'nantucket':{lat:41.285,lon:-70.096},'custom':null
-    };
+    if(!window.HG) return false;
+    var HOME=window.HG.BOAT.home;
+    function destPt(key){ var d=window.HG.DEST[key]; return (d&&d.coords)?{lat:d.coords[0],lon:d.coords[1]}:null; }
     var ASPECT=1000/760, MINLAT=0.10, PADFRAC=0.35;
     function bboxFor(key){
-      var d=DEST[key], pts=[HOME]; if(d) pts.push(d);
+      var d=destPt(key), pts=[HOME]; if(d) pts.push(d);
       var lats=pts.map(function(p){return p.lat;}), lons=pts.map(function(p){return p.lon;});
       var minLat=Math.min.apply(null,lats), maxLat=Math.max.apply(null,lats);
       var minLon=Math.min.apply(null,lons), maxLon=Math.max.apply(null,lons);
@@ -926,8 +926,8 @@ init();
 <!-- Conditions dashboard: replaces the static schematic with a live per-query readout -->
 <script>
 (function(){
-  var HOME=[41.5867,-70.4647];
-  var DEST={local:[41.585,-70.462],'sampsons-island':[41.577,-70.437],cotuit:[41.615,-70.437],waquoit:[41.567,-70.535],falmouth:[41.543,-70.610],naushon:[41.518,-70.680],'oak-bluffs':[41.457,-70.558],'vineyard-haven':[41.454,-70.604],edgartown:[41.389,-70.513],hyannis:[41.638,-70.278],nantucket:[41.285,-70.096],custom:null};
+  function homePt(){ var b=window.HG&&window.HG.BOAT; return b?[b.home.lat,b.home.lon]:null; }
+  function destPt(key){ var d=window.HG&&window.HG.DEST&&window.HG.DEST[key]; return (d&&d.coords)?d.coords:null; }
   function toR(d){return d*Math.PI/180;}
   function bearing(a,b){var dLon=toR(b[1]-a[1]);var y=Math.sin(dLon)*Math.cos(toR(b[0]));var x=Math.cos(toR(a[0]))*Math.sin(toR(b[0]))-Math.sin(toR(a[0]))*Math.cos(toR(b[0]))*Math.cos(dLon);return (Math.atan2(y,x)*180/Math.PI+360)%360;}
   function dist(a,b){var R=3440.065;var dLat=toR(b[0]-a[0]),dLon=toR(b[1]-a[1]);var h=Math.pow(Math.sin(dLat/2),2)+Math.cos(toR(a[0]))*Math.cos(toR(b[0]))*Math.pow(Math.sin(dLon/2),2);return 2*R*Math.asin(Math.sqrt(h));}
@@ -973,8 +973,8 @@ init();
     if(wd!=null){var a=wd*Math.PI/180,tail=R-14,head=30;var tx=CX+tail*Math.sin(a),ty=CY-tail*Math.cos(a),hx=CX+head*Math.sin(a),hy=CY-head*Math.cos(a);svg.appendChild(el('line',{x1:tx,y1:ty,x2:hx,y2:hy,stroke:'#e8694a','stroke-width':4,'stroke-linecap':'round'}));var perp=a+Math.PI/2;var b1x=hx+14*Math.sin(a)+7*Math.sin(perp),b1y=hy-14*Math.cos(a)-7*Math.cos(perp),b2x=hx+14*Math.sin(a)-7*Math.sin(perp),b2y=hy-14*Math.cos(a)+7*Math.cos(perp);svg.appendChild(el('polygon',{points:hx+','+hy+' '+b1x+','+b1y+' '+b2x+','+b2y,fill:'#e8694a'}));}
     svg.appendChild(el('circle',{cx:CX,cy:CY,r:4,fill:'rgba(255,255,255,.6)'}));
     function block(x,label,val,sub,color){var lb=el('text',{x:x,y:410,'font-size':12,fill:'rgba(255,255,255,.5)','letter-spacing':1.5,'font-weight':600});lb.textContent=label;svg.appendChild(lb);var v=el('text',{x:x,y:444,'font-size':26,fill:color||'#fff','font-weight':600});v.textContent=val;svg.appendChild(v);if(sub){var s=el('text',{x:x,y:466,'font-size':12,fill:'#9fb2c0'});s.textContent=sub;svg.appendChild(s);}}
-    var coord=DEST[state.destVal];
-    if(coord){var brg=Math.round(bearing(HOME,coord));var dnm=dist(HOME,coord).toFixed(1);block(34,'HEADING',brg+'\u00b0',card16(brg)+' to '+state.destText,'#fff');block(210,'DISTANCE',dnm,'NM from dock','#fff');}
+    var coord=destPt(state.destVal), home=homePt();
+    if(coord&&home){var brg=Math.round(bearing(home,coord));var dnm=dist(home,coord).toFixed(1);block(34,'HEADING',brg+'\u00b0',card16(brg)+' to '+state.destText,'#fff');block(210,'DISTANCE',dnm,'NM from dock','#fff');}
     else{block(34,'HEADING','\u2014','set a destination','#fff');block(210,'DISTANCE','\u2014','','#fff');}
     var seaLabel='\u2014',seaColor='#9fb2c0';
     if(typeof state.wave==='number'){if(state.wave>=70){seaLabel='Calm';seaColor='#2f8f6b';}else if(state.wave>=45){seaLabel='Moderate';seaColor='#d99a2b';}else{seaLabel='Rough';seaColor='#d0563b';}}

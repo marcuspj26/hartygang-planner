@@ -1,0 +1,90 @@
+{
+  "name": "Hartygang",
+  "tagline": "Weather & Sea Planner",
+  "vessel": {
+    "model": "2024 EdgeWater 230 CC",
+    "lengthFt": 23,
+    "engine": "single 300 HP Yamaha outboard",
+    "photo": "./boat-crop.jpg",
+    "photoAlt": "Hartygang — 2024 EdgeWater 230 CC at anchor",
+    "photoCaption": "Hartygang at anchor — 2024 EdgeWater 230 CC, single 300 HP Yamaha."
+  },
+  "home": {
+    "name": "New Seabury",
+    "town": "Mashpee, Massachusetts",
+    "lat": 41.5867,
+    "lon": -70.4647,
+    "waterBody": "Nantucket Sound",
+    "bayName": "Popponesset Bay",
+    "entranceName": "Popponesset entrance",
+    "shortName": "Popponesset",
+    "southLandmassLabel": "Martha’s Vineyard"
+  },
+  "marineZone": "ANZ232",
+  "tide": {
+    "stationId": "8447742",
+    "stationName": "Popponesset Island",
+    "label": "Popponesset tide",
+    "m2RefHighWaterUtc": "2025-01-01T04:30:00Z",
+    "m2PeriodMin": 745
+  },
+  "performance": {
+    "cruiseSpeedKts": 22,
+    "fuelGalPerNmLow": 0.7,
+    "fuelGalPerNmHigh": 0.95
+  },
+  "comfort": {
+    "waveFt": 2.8,
+    "gustKts": 26,
+    "windKts": 18,
+    "steepnessRatio": 0.55
+  },
+  "crew": {
+    "default": "regular",
+    "profiles": {
+      "family": { "label": "Comfort first", "tol": 0.75 },
+      "regular": { "label": "Regular crew", "tol": 1.0 },
+      "sport": { "label": "Experienced / sport", "tol": 1.35 }
+    }
+  },
+  "defaults": { "dest": "oak-bluffs", "departure": "08:00" },
+  "links": {
+    "lunchMenu": "https://mashpeemarket.com/menu",
+    "marineZoneForecast": "https://marine.weather.gov/MapClick.php?TextType=2&zoneid=ANZ232",
+    "tideStation": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=8447742"
+  },
+  "advisorChips": [
+    "How about Sampson's Island today?",
+    "Can we make Naushon tomorrow?",
+    "Will Falmouth be rough after lunch?",
+    "Which day is best for Oak Bluffs?"
+  ],
+  "verdictCopy": {
+    "go": "Conditions are calm and well within this center console’s comfort zone — good to run.",
+    "caution": "Manageable but sporty — expect chop and spray. Trim down, slow in the sets, and brief the crew before you go.",
+    "hold": "Genuinely dangerous for a 23-ft center console. Stay on the mooring — this one is a hard no."
+  },
+  "copy": {
+    "heroEyebrow": "New Seabury · Mashpee, Massachusetts",
+    "heroTitle": "Where should Hartygang go?",
+    "heroLede": "Start with a destination. Hartygang turns the live forecast into a route-specific trip call and a practical read on the ride home.",
+    "askPlaceholder": "Can we take the kids to Sampson's Island after lunch and still have a comfortable ride home?",
+    "boatSectionTitle": "Advice shaped for a 2024 EdgeWater 230 CC.",
+    "boatSectionBody": "Hartygang is a 2024 EdgeWater 230 CC — a 23-foot center console powered by a single 300 HP Yamaha outboard. Hartygang's day starts at the home dock inside Popponesset Bay — not at a generic Cape Cod waypoint. Every route begins at the home port, clears the local entrance, and weighs the exposed return leg back across Nantucket Sound.",
+    "footerTag": "Built for the next good day on Nantucket Sound."
+  },
+  "safetyCards": [
+    {
+      "title": "Life jackets",
+      "body": "Stowed in the console — in the compartment above the helm. There’s one for everyone aboard. If you’d feel more comfortable wearing one at any point, grab it; no one will bat an eye."
+    },
+    {
+      "title": "Radio",
+      "body": "The VHF stays on <strong>Channel 16</strong> — the hailing and distress channel monitored by the Coast Guard. That’s where we call for help if we ever need it."
+    },
+    {
+      "title": "Speak up",
+      "body": "Ask questions and voice any concern — about the weather, the ride, feeling seasick, anything. Nothing is too small. A good day on the water is one where everyone feels comfortable saying something."
+    }
+  ]
+}
